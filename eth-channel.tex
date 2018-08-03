@@ -1,0 +1,181 @@
+% This is based on the LLNCS.DEM the demonstration file of % the LaTeX macro
+% package from Springer-Verlag % for Lecture Notes in Computer Science, version
+% 2.4 for LaTeX2e as of 16. April 2010
+%
+% See http://www.springer.com/computer/lncs/lncs+authors?SGWID=0-40209-0-0-0
+% for the full guidelines.
+\documentclass{llncs}
+\usepackage{graphicx}
+\graphicspath{ {./assets/} }
+
+\usepackage{enumitem}
+\setlist[enumerate]{itemsep=2mm}
+
+\usepackage{dirtytalk}
+\usepackage{minted}
+\usepackage{amsmath}
+\usepackage{pdflscape}
+\usepackage[pass]{geometry}
+
+%
+% Tables
+% --------
+\usepackage[table]{xcolor}
+\usepackage{hhline}
+\usepackage{booktabs} % much better tables
+\usepackage{multirow} % allows to fuse rows
+\usepackage{array}    % manipulate array
+\usepackage{tabularx} % better tables
+
+% Define new tabularx column types:
+%  - R: streteched right aligned
+%  - C: stretched centered
+%  - N: left aligned, specified space
+\newcolumntype{R}{>{\raggedleft\arraybackslash}X}
+\newcolumntype{C}{>{\centering\arraybackslash}X}
+\newcolumntype{N}[1]{>{\raggedleft\arraybackslash}p{#1}}
+\newcolumntype{S}{>{\hsize=.5\hsize}C}
+
+% Set row height multiplicator to provide more breathing space
+\renewcommand{\arraystretch}{1.5}
+
+\usepackage[backend=biber]{biblatex}
+\addbibresource{bibliography.bib}
+
+\pagestyle{plain}
+\setcounter{page}{1}
+\pagenumbering{arabic}
+
+\begin{document}
+
+\title{Multi-client Partially Non-Interactive and Instantaneous One-way Payment Channel for Ethereum}
+\author{Thomas Shababi\inst{1} \and Jo\"el Gugger\inst{1} \and Daniel Lebrecht\inst{1}}
+
+\authorrunning{Thomas~S.~Shababi et al.}
+\tocauthor{Thomas~S.~Shababi, Joel Gugger, and Daniel Lebrecht}
+\subtitle{{\normalsize\today{\small\ -- DRAFT}}}
+\institute{TrueLevel SA, Neuch\^atel, Switzerland\\ \email{\{tom, joel, d\}@truelevel.io}}
+
+\maketitle
+
+\begin{abstract} Ethereum is a distributed computing platform and operating system featuring smart contract functionality. Transactions are faster than other blockchain but not instant and each of them cost some ``gas''. This gas is used to quantify the amount of fee to pay for computation. \keywords{Crypto-currencies, Ethereum, Payment channels}
+\end{abstract}
+
+\section{Introduction} 
+\subsection{The value of unidirectional channels}
+
+\section{Multi-client payment channel} Partially non-interactive multi-client payment channel is composed of clients $c \in \mathcal{C}$ and one provider $\mathcal{P}$. $\mathcal{C}$ is the set of all clients registred in the multi-client payment channel. Clients can send money to the provider through the channel $c \rightarrow \mathcal{P}$ but cannot recieve into the channel $\mathcal{P} \not\rightarrow c$.
+
+A payment channel is by definition a structure composed of two layer of states. The first layer of states is registred to the blockchain, i.e. ``on-chain'' or contract states $\mu \in M$, and the second layer of states is kept ``off-chain'' between the participants, i.e. channel states $\sigma \in \Sigma$.
+
+It is possible to transition from a state $\sigma$ to another state $\sigma'$, we denote state transition with $\rightarrow$, i.e. $\sigma \rightarrow \sigma'$.  Modifiers $\omega \in \Omega$ are used to create transition on channel states $\sigma \in \Sigma$. A transition in $\Sigma$ depends on modifiers and contract states. We denote a transition from $\sigma, \sigma' \in \Sigma$ that depend on $\mu \in M$ as
+
+$$\sigma \xrightarrow{\mu+\omega} \sigma'$$
+
+Messages allow transitions between two states $\mu, \mu' \in M$, also denoted $\mu \rightarrow \mu '$. A message $m$ can be ``applied'' to a state $\mu$, we denote this operation with $m(\mu)$, i.e. $\mu \xrightarrow{m} \mu'$. A message is created based on a channel state
+
+$$\sigma \implies m$$
+
+\subsection{Contract states} Each client $c \in \mathcal{C}$ in the contract is defined by an on-chain state $\mu \in M$. States $\mu \in M$ are a tuple $(I(c), B(c))$.
+
+\subsection{Contract state variables} We define variables to acces the the contract state $\mu \in M$ for a client $c \in \mathcal{C}$.
+
+\subsubsection{Current on-chain index, $I(c)$} For each client the current index $i$ must be retreivable, $\forall c \in \mathcal{C}, \quad \exists I(c) \in \mu >= 0$. The index for a client must start from $0$.
+
+\subsubsection{Current on-chain balance, $B(c)$} For each client the current balance amount must be retreivable, $\forall c \in \mathcal{C}, \quad \exists B(c) \in \mu >= 0$.
+
+\subsection{Channel states} Each client $c \in \mathcal{C}$ is defined by his channel state $\sigma \in \Sigma$. States $\sigma \in \Sigma$ are composed of: (i) a validity index, (ii) the on-chain balance
+of the client, (iii) the total deposit of the client, and (iv) the total owned by the provider. We denote $\sigma$ as
+
+$$(i, B(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
+
+\subsection{Channel state variables} We define variables to represent: (i) the lifetime of a single channel in the multi-client channel architecture $L(c \rightarrow \mathcal{P})$, (ii) the total amount deposited for a client over the lifetime $D(c)$, and (iii) the total amount own by the provider over the lifetime $\sum c \rightarrow \mathcal{P}$.
+
+The amount available into a single channel for a client $c \in \mathcal{C}$ is computed with $A(c \rightarrow \mathcal{P}) = D(c) - \sum c \rightarrow \mathcal{P}, \quad B(c) >= A(c \rightarrow \mathcal{P})$.
+
+%The amount currently own by the provider $\mathcal{P}$ is computed with $O(\mathcal{P}) = $.
+
+\subsection{Messages} Messages $m \in \mathcal{M}$ are exchanged between clients $\mathcal{C}$ and provider $\mathcal{P}$. A message is related to one and only one relation in $\mathcal{C} \times \mathcal{P}$.
+
+\subsubsection{Minimal message components} A message $m \in \mathcal{M}$ between a client $c$ and the provider $\mathcal{P}$ has at least tree components: (i) a validity index, (ii) the total of deposit, and (iii) the total own by the provider. We denote $m$ as the triple
+
+$$(i, D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
+
+\section{State transitions}
+
+\subsection{Contract state, $\overrightarrow{M}$} Contract states $\mu \in M$ can transitioned $\mu \rightarrow \mu'$ because of a message $m \in \mathcal{M}$ or an external event $e$.
+
+\subsubsection{Settlement} $(i, B(c)) \xrightarrow{m} (i+1, B(c)\downarrow)\ |\ m = (i+1, D(c), \sum c \rightarrow \mathcal{P})$. It is worth noting that with this rule it is not possible to settle a zero amount because the balance amount $B(c)$ must go down!
+
+\begin{equation*}
+\begin{split}
+    O(\mathcal{P}) &= B(c) - (D(c) - \textstyle \sum c \rightarrow \mathcal{P}) \\
+    &= B(c) - A(c \rightarrow \mathcal{P})
+\end{split}
+\end{equation*}
+
+$O(\mathcal{P})$ is the amount owned by the provider at the settlement time. The provider can settle the amount in the balance minus the remaining funds of the client $c$.
+
+\begin{equation*}
+\begin{split}
+    B(c)\downarrow \ &= B(c) - O(\mathcal{P}) \\
+    &= A(c \rightarrow \mathcal{P})
+\end{split}
+\end{equation*}
+
+The new client balance is the balance minus the settlement or directly the remaing funds of the client.
+
+\subsubsection{Full refund} $(i, B(c)) \xrightarrow{m} (i+1, 0)\ |\ m = (i+1, D(c), \sum c \rightarrow \mathcal{P})$. It is a full refund if the remaining funds in the channel for the client $c$ $A(c \rightarrow \mathcal{P})$ are equal to the current balance $B(c)$
+
+\begin{equation*}
+\begin{split}
+    B(c) &\overset{?}{=} D(c) - \textstyle \sum c \rightarrow \mathcal{P} \\
+    &\overset{?}{=} A(c \rightarrow \mathcal{P})
+\end{split}
+\end{equation*}
+
+\subsubsection{Partial refund} $(i, B(c)) \xrightarrow{m} (i+1, 0)\ |\ m = (i+1, D(c), \sum c \rightarrow \mathcal{P})$. It is a partial refund if the remaing funds in the channel is smaller than the current balance
+
+\begin{equation*}
+\begin{split}
+    B(c) &\overset{?}{>} D(c) - \textstyle \sum c \rightarrow \mathcal{P} \\
+    &\overset{?}{>} A(c \rightarrow \mathcal{P})
+\end{split}
+\end{equation*}
+
+\subsubsection{Top up} $(i, B(c)) \xrightarrow{e} (i, B(c)\uparrow)$.
+
+\subsubsection{Invalid transition} $(i, B(c)) \rightarrow (i, B(c)\downarrow)$. This transition is invalid because the balance is changed without incrementing the validity index $i$.
+
+\subsubsection{Invalid transition ???} $(i, B(c)) \rightarrow (i+1, B(c)\uparrow)$ ??? invalidates valide pending indexes $i$ ???
+
+\subsection{Channel state, $\overrightarrow{\Sigma}$} Channel state transitions $\sigma \xrightarrow{\mu + \omega} \sigma' \in \Sigma$, i.e. applying a modifier $\omega$ on the current state $\mu$ to result on $\sigma'$.
+
+\subsubsection{Initialize channel state} $\sigma = (0, B(c), B(c), \texttt{pay})$
+
+%The amount of money available for a client $c$ in the channel is denoted by $\mathcal{M}(c)$. The amount own by the provider $\mathcal{P}$ for a client $c$ is denoted by $M(\mathcal{P}, c)$.
+
+%\subsection{Client send money}
+%A client $c$ can send up to $\mathcal{M}(c)$ to the provider through the channel by giving him a token.
+
+\section{Protocol} The protocol describe valid and invalid actions for clients and the provider, rules for state transition, and messages.
+
+\subsubsection{Client actions} A client can send money through the channel, authorize limited payment, and refund his money.
+
+\subsubsection{Provider actions} The provider can settle a single channel, and ``settle and close'' a single channel.
+
+\subsection{Send money, $c \rightarrow \mathcal{P}$} Two messages are generated: (i) a refund message for the client, and (ii) a settle message for the provider.
+
+\subsubsection{Refund message, $m_r$} Refund message $m_r$ must allow the client to claim his remaing funds $A(c \rightarrow \mathcal{P})$ and transfer them after some locktime if the provider does not dispute the refund. 
+
+\subsubsection{Settle message, $m_s$}
+
+
+\section{Acknowledgement} Loan Ventura, Thomas Roulin and Nicolas Huguenin are acknowledged for their helpful contribution and comments during the completion of this work.
+
+%
+% ---- Bibliography ----
+%
+\printbibliography
+
+\end{document}
