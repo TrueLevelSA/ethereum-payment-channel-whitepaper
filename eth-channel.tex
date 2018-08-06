@@ -101,17 +101,19 @@ $$A(c) = D(c) - \textstyle \sum c \rightarrow \mathcal{P} + (B_\mu(c) - B_\sigma
 
 It is woth noting that $B_\mu(c) - B_\sigma(c)$ is added to the difference of total deposit and total sent in case of on-chain changements, like top up.
 
-%The amount currently own by the provider $\mathcal{P}$ is computed with $O(\mathcal{P}) = $.
-
 \subsection{Messages} Messages $m \in \mathcal{M}$ are exchanged between clients $\mathcal{C}$ and provider $\mathcal{P}$. A message is related to one and only one element in $\mathcal{C} \times \mathcal{P}$.
 
 \subsubsection{Minimal message} A minimal message $m \in \mathcal{M}$ between a client $c$ and the provider $\mathcal{P}$ is composed of four components: (i) a validity index, (ii) the lastest observed balance, (iii) the total of deposit, and (iv) the total own by the provider. We denote $m$ as the triple
 
 $$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
 
+\subsection{Modifiers} Modifiers $\omega \in \Omega$ are input parameters that modify channel states $\sigma$. They encapsulate the channel capabilities. In multi-clients payment channel the capability is sending money through the channel, i.e. $c \rightarrow \mathcal{P}$.
+
+\subsubsection{Payment, $\omega(a)$} This modifier is used to increase $a$ amount the provider balance $O(\mathcal{P})$ from client $c$.
+
 \section{State transitions}
 
-\subsection{Contract state, $\overrightarrow{M}$} Contract states $\mu \in M$ can transitioned $\mu \rightarrow \mu'$ because of a message $m \in \mathcal{M}$ or external events.
+\subsection{Contract state, $M$} Contract states $\mu \in M$ can transitioned $\mu \rightarrow \mu'$ because of a message $m \in \mathcal{M}$ or external events.
 
 \subsubsection{Settlement} $(i, B_\mu(c)) \xrightarrow{m} (i+1, B_\mu(c)\downarrow)\ |\ m = (i+1, B_\sigma(c), D(c), \sum c \rightarrow \mathcal{P})$. It is worth noting that with this rule it is not possible to settle a zero amount because the balance amount $B_\mu(c)$ must go down!
 \begin{equation*}
@@ -159,12 +161,41 @@ In that case the provider amount is
 
 \subsubsection{Invalid top up} $(i, B_\mu(c)) \rightarrow (i+1, B_\mu(c)\uparrow)$ Increasing validity index $i$ while increasing the contract balance invalidates the set of transaction $i$. The current set of transactions must be invalidate only during a settlement.
 
-\subsubsection{Invalid validity index} $(i, B_\mu(c)) \rightarrow (i\downarrow, B_\mu(c)\downarrow\uparrow)$ Decreasing the validity index $i$ is always invalid. Validity index must not be decreased.
+\subsubsection{Invalid validity index} $(i, B_\mu(c)) \rightarrow (i\downarrow, \_)$ Decreasing the validity index $i$ is always invalid. Validity index must not be decreased.
 
-\subsection{Channel state, $\overrightarrow{\Sigma}$} Channel state transitions $\sigma \xrightarrow{\mu + \omega} \sigma' \in \Sigma$, i.e. applying a modifier $\omega$ on the current state $\mu$ to result on $\sigma'$.
+\subsection{Channel state, $\Sigma$} Channel state transitions $\sigma \xrightarrow{\mu + \omega} \sigma'$ for $\sigma, \sigma' \in \Sigma$, i.e. applying a modifier $\omega$ on the current state $\mu$ to result on $\sigma'$. The contract state $\mu$ must be query on-chain. The base channel state is
+\begin{equation*}
+\begin{split}
+  \sigma &=
+  \begin{cases}
+    \emptyset & \quad \text{if no previous state exists} \\
+    (i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P}) & \quad \text{otherwise}
+  \end{cases}
+\end{split}
+\end{equation*}
 
-%\subsubsection{Initialize channel state} $\sigma = (0, B(c), B(c), \texttt{pay})$
+\subsubsection{Payment, $\mu(I(c), B_\mu(c))+\omega(a)$} Payments trigger transition in channel states from a base state $\sigma$ to a destination state $\sigma'$ noted $\sigma \xrightarrow{\mu + \omega(a)} \sigma'$.
+The destination state is computed as
+\begin{equation*}
+\begin{split}
+  \sigma' &=
+  \begin{cases}
+      (I(c), B_\mu(c), B_\mu(c), a) & \quad \text{if } \sigma = \emptyset \\
+      (I(c), B_\mu(c), D(c), \textstyle \sum c \rightarrow \mathcal{P}+a) & \quad \text{otherwise}
+  \end{cases}
+\end{split}
+\end{equation*}
 
+\subsubsection{Top up, $\mu(I(c), B_\mu(c) \uparrow)$} Each top up event modify the contract state $\mu$, then the channel state $\sigma$ must be updated to keep track of the real balance.
+\begin{equation*}
+\begin{split}
+  \sigma' &=
+  \begin{cases}
+      (I(c), B_\mu(c), B_\mu(c), 0) & \quad \text{if } \sigma = \emptyset \\
+      (I(c), B_\mu(c), D(c) + (B_\mu(c) - B_\sigma(c)), \textstyle \sum c \rightarrow \mathcal{P}) & \quad \text{otherwise}
+  \end{cases}
+\end{split}
+\end{equation*}
 %\section{Protocol} The protocol describe valid and invalid actions for clients and the provider, rules for state transition, and messages.
 %
 %\subsubsection{Client actions} A client can send money through the channel, authorize limited payment, and refund his money.
@@ -180,13 +211,11 @@ In that case the provider amount is
 %
 %\section{Acknowledgement} Loan Ventura, Thomas Roulin and Nicolas Huguenin are acknowledged for their helpful contribution and comments during the completion of this work.
 
-\section{Example}
-
 \begin{table}[t]
-  \begin{tabularx}{\textwidth}{| S | S | S | C | C |}
+  \begin{tabularx}{\textwidth}{| S | S | C | C | C |}
     \cline{2-5}
       \multicolumn{1}{c|}{ } & $\omega$ & $\mu$ & $m$ & $\sigma$ \\ \cline{2-5}
-      \multicolumn{1}{c|}{ } & $c \rightarrow \mathcal{P}$ & $(i, B_\mu(c))$ & $(i, B_\sigma(c), D(c), \sum)$ & $(i, B_\sigma(c), D(c), \sum)$ \\
+      \multicolumn{1}{c|}{ } & $\omega(a)$ & $(I(c), B_\mu(c))$ & $(i, B_\sigma(c), D(c), \sum)$ & $(i, B_\sigma(c), D(c), \sum)$ \\
   \hhline{-====}
       init & & $(0,10)$ & & $\emptyset$ \\
       transact & $+1$ & & $(1, 10, 10, 1)$& $(0, 10, 10, 1)$ \\
@@ -194,7 +223,7 @@ In that case the provider amount is
       settle & & (1,8) & & \\
       transact & $+2$  & & $(2, 8, 10, 4)$ & $(1, 8, 10, 4)$ \\
       transact & $+2$  & & $(2, 8, 10, 6)$ & $(1, 8, 10, 6)$ \\
-      top up & & (1,18) & & \\
+      top up & & (1,18) & & $(1, 18, 20, 6)$ \\
       transact & $+1$ & & $(2, 18, 20, 7)$ & $(1, 18, 20, 7)$ \\
       settle & & (2,13) & & \\
       \cline{1-5}
@@ -205,17 +234,19 @@ In that case the provider amount is
 
 
 \begin{table}[t]
-  \begin{tabularx}{\textwidth}{| S | S | S | C | C |}
+  \begin{tabularx}{\textwidth}{| S | S | C | C | C |}
     \cline{2-5}
       \multicolumn{1}{c|}{ } & $\omega$ & $\mu$ & $m$ & $\sigma$ \\ \cline{2-5}
-      \multicolumn{1}{c|}{ } & $c \rightarrow \mathcal{P}$ & $(i, B_\mu(c))$ & $(i, B_\sigma(c), D(c), \sum)$ & $(i, B_\sigma(c), D(c), \sum)$ \\
+      \multicolumn{1}{c|}{ } & $\omega(a)$ & $(I(c), B_\mu(c))$ & $(i, B_\sigma(c), D(c), \sum)$ & $(i, B_\sigma(c), D(c), \sum)$ \\
   \hhline{-====}
-      init & & $(0,5)$ & & $\emptyset$ \\
-      transact & $+3$ & & $(1, 5, 5, 3)$& $(0, 5, 5, 3)$ \\
+      init & & $(0,3)$ & & $\emptyset$ \\
+      top up & & (0,5) & & $(0, 5, 5, 0)$ \\
+      transact & $+3$ & & $(1, 5, 5, 3)$ & $(0, 5, 5, 3)$ \\
       settle & & (1,2) & & \\
-      transact & $+1$ & & $(2, 2, 5, 4)$& $(1, 2, 5, 4)$ \\
-      top up & & (1,4) & & \\
+      transact & $+1$ & & $(2, 2, 5, 4)$ & $(1, 2, 5, 4)$ \\
+      top up & & (1,4) & & $(1, 4, 7, 4)$ \\
       settle & & (2,3) & & \\
+      transact & $+2$ & & $(3, 3, 7, 6)$ & $(2, 3, 7, 6)$ \\
       \cline{1-5}
   \end{tabularx}
   \medskip
