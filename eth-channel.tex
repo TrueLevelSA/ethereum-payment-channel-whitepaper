@@ -62,116 +62,165 @@
 \end{abstract}
 
 \section{Introduction} 
-\subsection{The value of unidirectional channels}
 
-\section{Multi-client payment channel} Partially non-interactive multi-client payment channel is composed of clients $c \in \mathcal{C}$ and one provider $\mathcal{P}$. $\mathcal{C}$ is the set of all clients registred in the multi-client payment channel. Clients can send money to the provider through the channel $c \rightarrow \mathcal{P}$ but cannot recieve into the channel $\mathcal{P} \not\rightarrow c$.
+\section{Multi-client payment channels} Partially non-interactive multi-client payment channels are composed of clients $c \in \mathcal{C}$ and one provider $\mathcal{P}$. $\mathcal{C}$ is the set of all clients registred in the multi-client payment channel. Clients can send money to the provider through the channel $c \rightarrow \mathcal{P}$ but cannot recieve through the channel $\mathcal{P} \not\rightarrow c$.
 
 A payment channel is by definition a structure composed of two layer of states. The first layer of states is registred to the blockchain, i.e. ``on-chain'' or contract states $\mu \in M$, and the second layer of states is kept ``off-chain'' between the participants, i.e. channel states $\sigma \in \Sigma$.
 
-It is possible to transition from a state $\sigma$ to another state $\sigma'$, we denote state transition with $\rightarrow$, i.e. $\sigma \rightarrow \sigma'$.  Modifiers $\omega \in \Omega$ are used to create transition on channel states $\sigma \in \Sigma$. A transition in $\Sigma$ depends on modifiers and contract states. We denote a transition from $\sigma, \sigma' \in \Sigma$ that depend on $\mu \in M$ as
-
+It is possible to transition from a state $\sigma$ to another state $\sigma'$, we denote state transition with $\rightarrow$, i.e. $\sigma \rightarrow \sigma'$.  Modifiers $\omega \in \Omega$ are used to create transition on channel states $\sigma \in \Sigma$. A transition in $\Sigma$ depends on modifiers and contract states. We denote a transition from $\sigma, \sigma' \in \Sigma$ that depend on $\mu \in M$ and $\omega \in \Omega$ as
 $$\sigma \xrightarrow{\mu+\omega} \sigma'$$
 
 Messages allow transitions between two states $\mu, \mu' \in M$, also denoted $\mu \rightarrow \mu '$. A message $m$ can be ``applied'' to a state $\mu$, we denote this operation with $m(\mu)$, i.e. $\mu \xrightarrow{m} \mu'$. A message is created based on a channel state
-
 $$\sigma \implies m$$
 
-\subsection{Contract states} Each client $c \in \mathcal{C}$ in the contract is defined by an on-chain state $\mu \in M$. States $\mu \in M$ are a tuple $(I(c), B(c))$.
+\subsection{Contract states} Each client $c \in \mathcal{C}$ in the contract is defined by an on-chain state $\mu \in M$. States $\mu \in M$ are a tuple
+$$(I(c), B_\mu(c))$$
 
 \subsection{Contract state variables} We define variables to acces the the contract state $\mu \in M$ for a client $c \in \mathcal{C}$.
 
 \subsubsection{Current on-chain index, $I(c)$} For each client the current index $i$ must be retreivable, $\forall c \in \mathcal{C}, \quad \exists I(c) \in \mu >= 0$. The index for a client must start from $0$.
 
-\subsubsection{Current on-chain balance, $B(c)$} For each client the current balance amount must be retreivable, $\forall c \in \mathcal{C}, \quad \exists B(c) \in \mu >= 0$.
+\subsubsection{Current on-chain balance, $B_\mu(c)$} For each client the current balance amount must be retreivable, $\forall c \in \mathcal{C}, \quad \exists B_\mu(c) \in \mu >= 0$.
 
-\subsection{Channel states} Each client $c \in \mathcal{C}$ is defined by his channel state $\sigma \in \Sigma$. States $\sigma \in \Sigma$ are composed of: (i) a validity index, (ii) the on-chain balance
-of the client, (iii) the total deposit of the client, and (iv) the total owned by the provider. We denote $\sigma$ as
+\subsection{Channel states} Each client $c \in \mathcal{C}$ is defined by his channel state $\sigma \in \Sigma$. States $\sigma \in \Sigma$ are composed of: (i) a validity index, (ii) the latest observed on-chain balance
+of the client, (iii) the total deposit of the client, and (iv) the total owned by the provider. We denote a state $\sigma \in \Sigma$ as
+$$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
 
-$$(i, B(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
+\subsection{Channel state variables} We define variables to represent: (i) the lifetime of a single channel in the multi-client channel architecture, (ii) the total amount deposited for a client over the lifetime, and (iii) the total amount own by the provider over the lifetime.
 
-\subsection{Channel state variables} We define variables to represent: (i) the lifetime of a single channel in the multi-client channel architecture $L(c \rightarrow \mathcal{P})$, (ii) the total amount deposited for a client over the lifetime $D(c)$, and (iii) the total amount own by the provider over the lifetime $\sum c \rightarrow \mathcal{P}$.
+\subsubsection{Channel lifetime, $L(c \rightarrow \mathcal{P})$} It exists one lifetime and only one per elements in $\mathcal{C} \times \mathcal{P}$ and begin when the first deposit is made, i.e. one lifetime per client $c \in \mathcal{C}$.
 
-The amount available into a single channel for a client $c \in \mathcal{C}$ is computed with $A(c \rightarrow \mathcal{P}) = D(c) - \sum c \rightarrow \mathcal{P}, \quad B(c) >= A(c \rightarrow \mathcal{P})$.
+\subsubsection{Total deposit, $D(c)$} Total deposit of a client represent the total amount recieved from the begin of the lifetime. Each top up increase the total deposit.
+
+\subsubsection{Total sent, $\sum c \rightarrow \mathcal{P}$} Total amount sent to the provider by a client represent the sum of all transaction since the begining of the lifetime. Each transaction increase the total sent.
+
+\subsubsection{Minimal available amount, $A_m(c)$} Minimal amount available for a client is computed with the latest channel state $\sigma$. Without quering the contract state $\mu$ it is impossible to know if a bigger is now available.
+
+\subsubsection{Client available amount, $A(c)$} The full amount available into a single channel for a client $c \in \mathcal{C}$ is computed with
+$$A(c) = D(c) - \textstyle \sum c \rightarrow \mathcal{P} + (B_\mu(c) - B_\sigma(c)), \quad B_\mu(c) \geq A(c)$$
+
+It is woth noting that $B_\mu(c) - B_\sigma(c)$ is added to the difference of total deposit and total sent in case of on-chain changements, like top up.
 
 %The amount currently own by the provider $\mathcal{P}$ is computed with $O(\mathcal{P}) = $.
 
-\subsection{Messages} Messages $m \in \mathcal{M}$ are exchanged between clients $\mathcal{C}$ and provider $\mathcal{P}$. A message is related to one and only one relation in $\mathcal{C} \times \mathcal{P}$.
+\subsection{Messages} Messages $m \in \mathcal{M}$ are exchanged between clients $\mathcal{C}$ and provider $\mathcal{P}$. A message is related to one and only one element in $\mathcal{C} \times \mathcal{P}$.
 
-\subsubsection{Minimal message components} A message $m \in \mathcal{M}$ between a client $c$ and the provider $\mathcal{P}$ has at least tree components: (i) a validity index, (ii) the total of deposit, and (iii) the total own by the provider. We denote $m$ as the triple
+\subsubsection{Minimal message} A minimal message $m \in \mathcal{M}$ between a client $c$ and the provider $\mathcal{P}$ is composed of four components: (i) a validity index, (ii) the lastest observed balance, (iii) the total of deposit, and (iv) the total own by the provider. We denote $m$ as the triple
 
-$$(i, D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
+$$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
 
 \section{State transitions}
 
-\subsection{Contract state, $\overrightarrow{M}$} Contract states $\mu \in M$ can transitioned $\mu \rightarrow \mu'$ because of a message $m \in \mathcal{M}$ or an external event $e$.
+\subsection{Contract state, $\overrightarrow{M}$} Contract states $\mu \in M$ can transitioned $\mu \rightarrow \mu'$ because of a message $m \in \mathcal{M}$ or external events.
 
-\subsubsection{Settlement} $(i, B(c)) \xrightarrow{m} (i+1, B(c)\downarrow)\ |\ m = (i+1, D(c), \sum c \rightarrow \mathcal{P})$. It is worth noting that with this rule it is not possible to settle a zero amount because the balance amount $B(c)$ must go down!
-
+\subsubsection{Settlement} $(i, B_\mu(c)) \xrightarrow{m} (i+1, B_\mu(c)\downarrow)\ |\ m = (i+1, B_\sigma(c), D(c), \sum c \rightarrow \mathcal{P})$. It is worth noting that with this rule it is not possible to settle a zero amount because the balance amount $B_\mu(c)$ must go down!
 \begin{equation*}
 \begin{split}
-    O(\mathcal{P}) &= B(c) - (D(c) - \textstyle \sum c \rightarrow \mathcal{P}) \\
-    &= B(c) - A(c \rightarrow \mathcal{P})
+    O(\mathcal{P}) &= B_\mu(c) - A(c) \\
+    &= B_\mu(c) - (D(c) - \textstyle \sum c \rightarrow \mathcal{P} + (B_\mu(c) - B_\sigma(c))) \\
 \end{split}
 \end{equation*}
 
 $O(\mathcal{P})$ is the amount owned by the provider at the settlement time. The provider can settle the amount in the balance minus the remaining funds of the client $c$.
-
 \begin{equation*}
 \begin{split}
-    B(c)\downarrow \ &= B(c) - O(\mathcal{P}) \\
-    &= A(c \rightarrow \mathcal{P})
+    B_\mu(c)\downarrow \ &= B_\mu(c) - O(\mathcal{P}) \\
+    &= B_\mu(c) -(B_\mu(c) - (D(c) - \textstyle \sum c \rightarrow \mathcal{P} + (B_\mu(c) - B_\sigma(c)))) \\
 \end{split}
 \end{equation*}
 
-The new client balance is the balance minus the settlement or directly the remaing funds of the client.
+The new client balance is the current contract balance minus the the amount due to the provider.
 
-\subsubsection{Full refund} $(i, B(c)) \xrightarrow{m} (i+1, 0)\ |\ m = (i+1, D(c), \sum c \rightarrow \mathcal{P})$. It is a full refund if the remaining funds in the channel for the client $c$ $A(c \rightarrow \mathcal{P})$ are equal to the current balance $B(c)$
-
+\subsubsection{Full refund} $(i, B_\mu(c)) \xrightarrow{m} (i+1, 0)\ |\ m = (i+1, B_\sigma(c), D(c), \sum c \rightarrow \mathcal{P})$. It is a full refund if the client available funds in the channel for the client are equal to the current contract balance
 \begin{equation*}
 \begin{split}
-    B(c) &\overset{?}{=} D(c) - \textstyle \sum c \rightarrow \mathcal{P} \\
-    &\overset{?}{=} A(c \rightarrow \mathcal{P})
+    B_\mu(c) &\overset{?}{=} A(c) \\
+    &\overset{?}{=} D(c) - \textstyle \sum c \rightarrow \mathcal{P} + (B_\mu(c) - B_\sigma(c)) \\
 \end{split}
 \end{equation*}
 
-\subsubsection{Partial refund} $(i, B(c)) \xrightarrow{m} (i+1, 0)\ |\ m = (i+1, D(c), \sum c \rightarrow \mathcal{P})$. It is a partial refund if the remaing funds in the channel is smaller than the current balance
-
+\subsubsection{Partial refund} $(i, B_\mu(c)) \xrightarrow{m} (i+1, 0)\ |\ m = (i+1, B_\sigma(c), D(c), \sum c \rightarrow \mathcal{P})$. It is a partial refund if the client available funds in the channel are smaller than the current contract balance
 \begin{equation*}
 \begin{split}
-    B(c) &\overset{?}{>} D(c) - \textstyle \sum c \rightarrow \mathcal{P} \\
-    &\overset{?}{>} A(c \rightarrow \mathcal{P})
+    B(c) &\overset{?}{>} A(c)
 \end{split}
 \end{equation*}
 
-\subsubsection{Top up} $(i, B(c)) \xrightarrow{e} (i, B(c)\uparrow)$.
+In that case the provider amount is
+\begin{equation*}
+\begin{split}
+    O(\mathcal{P}) &= B_\mu(c) - A(c)
+\end{split}
+\end{equation*}
 
-\subsubsection{Invalid transition} $(i, B(c)) \rightarrow (i, B(c)\downarrow)$. This transition is invalid because the balance is changed without incrementing the validity index $i$.
+\subsubsection{Top up} $(i, B_\mu(c)) \xrightarrow{e} (i, B_\mu(c)\uparrow)$. Top up increase the contract balance for a client $c \in \mathcal{C}$. Validity index $i$ must not be incremented during the top up.
 
-\subsubsection{Invalid transition ???} $(i, B(c)) \rightarrow (i+1, B(c)\uparrow)$ ??? invalidates valide pending indexes $i$ ???
+\subsubsection{Invalid settlement} $(i, B_\mu(c)) \rightarrow (i, B_\mu(c)\downarrow)$. This transition is invalid because the balance is decreased without incrementing the validity index $i$. The current set of transactions must be invalidate after the settlement.
+
+\subsubsection{Invalid top up} $(i, B_\mu(c)) \rightarrow (i+1, B_\mu(c)\uparrow)$ Increasing validity index $i$ while increasing the contract balance invalidates the set of transaction $i$. The current set of transactions must be invalidate only during a settlement.
+
+\subsubsection{Invalid validity index} $(i, B_\mu(c)) \rightarrow (i\downarrow, B_\mu(c)\downarrow\uparrow)$ Decreasing the validity index $i$ is always invalid. Validity index must not be decreased.
 
 \subsection{Channel state, $\overrightarrow{\Sigma}$} Channel state transitions $\sigma \xrightarrow{\mu + \omega} \sigma' \in \Sigma$, i.e. applying a modifier $\omega$ on the current state $\mu$ to result on $\sigma'$.
 
-\subsubsection{Initialize channel state} $\sigma = (0, B(c), B(c), \texttt{pay})$
+%\subsubsection{Initialize channel state} $\sigma = (0, B(c), B(c), \texttt{pay})$
 
-%The amount of money available for a client $c$ in the channel is denoted by $\mathcal{M}(c)$. The amount own by the provider $\mathcal{P}$ for a client $c$ is denoted by $M(\mathcal{P}, c)$.
+%\section{Protocol} The protocol describe valid and invalid actions for clients and the provider, rules for state transition, and messages.
+%
+%\subsubsection{Client actions} A client can send money through the channel, authorize limited payment, and refund his money.
+%
+%\subsubsection{Provider actions} The provider can settle a single channel, and ``settle and close'' a single channel.
+%
+%\subsection{Send money, $c \rightarrow \mathcal{P}$} Two messages are generated: (i) a refund message for the client, and (ii) a settle message for the provider.
+%
+%\subsubsection{Refund message, $m_r$} Refund message $m_r$ must allow the client to claim his remaing funds $A(c \rightarrow \mathcal{P})$ and transfer them after some locktime if the provider does not dispute the refund. 
+%
+%\subsubsection{Settle message, $m_s$}
+%
+%
+%\section{Acknowledgement} Loan Ventura, Thomas Roulin and Nicolas Huguenin are acknowledged for their helpful contribution and comments during the completion of this work.
 
-%\subsection{Client send money}
-%A client $c$ can send up to $\mathcal{M}(c)$ to the provider through the channel by giving him a token.
+\section{Example}
 
-\section{Protocol} The protocol describe valid and invalid actions for clients and the provider, rules for state transition, and messages.
+\begin{table}[t]
+  \begin{tabularx}{\textwidth}{| S | S | S | C | C |}
+    \cline{2-5}
+      \multicolumn{1}{c|}{ } & $\omega$ & $\mu$ & $m$ & $\sigma$ \\ \cline{2-5}
+      \multicolumn{1}{c|}{ } & $c \rightarrow \mathcal{P}$ & $(i, B_\mu(c))$ & $(i, B_\sigma(c), D(c), \sum)$ & $(i, B_\sigma(c), D(c), \sum)$ \\
+  \hhline{-====}
+      init & & $(0,10)$ & & $\emptyset$ \\
+      transact & $+1$ & & $(1, 10, 10, 1)$& $(0, 10, 10, 1)$ \\
+      transact & $+1$ & & $(1, 10, 10, 2)$& $(0, 10, 10, 2)$ \\
+      settle & & (1,8) & & \\
+      transact & $+2$  & & $(2, 8, 10, 4)$ & $(1, 8, 10, 4)$ \\
+      transact & $+2$  & & $(2, 8, 10, 6)$ & $(1, 8, 10, 6)$ \\
+      top up & & (1,18) & & \\
+      transact & $+1$ & & $(2, 18, 20, 7)$ & $(1, 18, 20, 7)$ \\
+      settle & & (2,13) & & \\
+      \cline{1-5}
+  \end{tabularx}
+  \medskip
+  \caption{State transitions during channel lifetime}
+\end{table}
 
-\subsubsection{Client actions} A client can send money through the channel, authorize limited payment, and refund his money.
 
-\subsubsection{Provider actions} The provider can settle a single channel, and ``settle and close'' a single channel.
-
-\subsection{Send money, $c \rightarrow \mathcal{P}$} Two messages are generated: (i) a refund message for the client, and (ii) a settle message for the provider.
-
-\subsubsection{Refund message, $m_r$} Refund message $m_r$ must allow the client to claim his remaing funds $A(c \rightarrow \mathcal{P})$ and transfer them after some locktime if the provider does not dispute the refund. 
-
-\subsubsection{Settle message, $m_s$}
-
-
-\section{Acknowledgement} Loan Ventura, Thomas Roulin and Nicolas Huguenin are acknowledged for their helpful contribution and comments during the completion of this work.
+\begin{table}[t]
+  \begin{tabularx}{\textwidth}{| S | S | S | C | C |}
+    \cline{2-5}
+      \multicolumn{1}{c|}{ } & $\omega$ & $\mu$ & $m$ & $\sigma$ \\ \cline{2-5}
+      \multicolumn{1}{c|}{ } & $c \rightarrow \mathcal{P}$ & $(i, B_\mu(c))$ & $(i, B_\sigma(c), D(c), \sum)$ & $(i, B_\sigma(c), D(c), \sum)$ \\
+  \hhline{-====}
+      init & & $(0,5)$ & & $\emptyset$ \\
+      transact & $+3$ & & $(1, 5, 5, 3)$& $(0, 5, 5, 3)$ \\
+      settle & & (1,2) & & \\
+      transact & $+1$ & & $(2, 2, 5, 4)$& $(1, 2, 5, 4)$ \\
+      top up & & (1,4) & & \\
+      settle & & (2,3) & & \\
+      \cline{1-5}
+  \end{tabularx}
+  \medskip
+  \caption{Settlement after top up}
+\end{table}
 
 %
 % ---- Bibliography ----
