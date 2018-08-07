@@ -46,6 +46,11 @@
 \setcounter{page}{1}
 \pagenumbering{arabic}
 
+\usepackage{pgfplots}
+\pgfplotsset{width=6cm}
+\usepackage{float}
+\usepackage[caption = false]{subfig}
+
 \begin{document}
 
 \title{Multi-client Partially Non-Interactive and Instantaneous One-way Payment Channel for Ethereum}
@@ -131,6 +136,125 @@ $$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
 \section{State transitions}
 
 \subsection{Contract state, $\mu \rightarrow \mu'$} Contract states $\mu \in M$ can transition $\mu \rightarrow \mu'$ because of a message $m \in \mathcal{M}$ or external events.
+
+\begin{figure}[h]
+\subfloat[Valid transitions in $M$]{
+    \begin{tikzpicture}
+    \begin{axis}[
+        xlabel={Balance [$B_\mu(c)$]},
+        ylabel={Index [$I(c)$]},
+        xmin=0, xmax=100,
+        ymin=0, ymax=5,
+        xtick={0,20,40,60,80,100},
+        ytick={0,1,2,3,4},
+        ymajorgrids=true,
+        grid style=dashed,
+    ]
+     
+    \addplot[
+        color=black,
+        mark=square,
+        ]
+        coordinates {
+            (0,0)(25,0)(0,1)(70,1)(50,2)(10,3)(60,3)(0,4)
+        };
+     
+    \end{axis}
+    \end{tikzpicture}}
+\subfloat[$(I(c), B_\mu(c)) \rightarrow (I(c)+1, B_\mu(c)\uparrow)$]{
+    \begin{tikzpicture}
+    \begin{axis}[
+        xlabel={Balance [$B_\mu(c)$]},
+        xmin=0, xmax=100,
+        ymin=0, ymax=5,
+        xtick={0,20,40,60,80,100},
+        ytick={0,1,2,3,4},
+        ymajorgrids=true,
+        grid style=dashed,
+    ]
+     
+    \addplot[
+        color=black,
+        mark=square,
+        ]
+        coordinates {
+            (0,0)(25,0)(0,1)(50,1)
+        };
+     
+    \addplot[
+        color=red,
+        mark=square,
+        ]
+        coordinates {
+            (50,1)(70,2)
+        };
+     
+    \end{axis}
+    \end{tikzpicture}}\\
+\subfloat[$(I(c), B_\mu(c)) \rightarrow (I(c)\downarrow, \_)$]{
+    \begin{tikzpicture}
+    \begin{axis}[
+        xlabel={Balance [$B_\mu(c)$]},
+        ylabel={Index [$I(c)$]},
+        xmin=0, xmax=100,
+        ymin=0, ymax=5,
+        xtick={0,20,40,60,80,100},
+        ytick={0,1,2,3,4},
+        ymajorgrids=true,
+        grid style=dashed,
+    ]
+     
+    \addplot[
+        color=black,
+        mark=square,
+        ]
+        coordinates {
+            (0,0)(25,0)(0,1)(50,1)
+        };
+     
+    \addplot[
+        color=red,
+        mark=square,
+        ]
+        coordinates {
+            (50,1)(50,0)
+        };
+     
+    \end{axis}
+    \end{tikzpicture}}
+\subfloat[$(I(c), B_\mu(c)) \rightarrow (I(c), B_\mu(c)\downarrow)$]{
+    \begin{tikzpicture}
+    \begin{axis}[
+        xlabel={Balance [$B_\mu(c)$]},
+        xmin=0, xmax=100,
+        ymin=0, ymax=5,
+        xtick={0,20,40,60,80,100},
+        ytick={0,1,2,3,4},
+        ymajorgrids=true,
+        grid style=dashed,
+    ]
+     
+    \addplot[
+        color=black,
+        mark=square,
+        ]
+        coordinates {
+            (0,0)(25,0)(0,1)(70,1)
+        };
+     
+    \addplot[
+        color=red,
+        mark=square,
+        ]
+        coordinates {
+            (70,1)(50,1)
+        };
+     
+    \end{axis}
+    \end{tikzpicture}}
+\caption{State transitions in $M$}
+\label{fig:contractStateTransitions}
+\end{figure}
 
 \subsubsection{Settlement} $(i, B_\mu(c)) \xrightarrow{m} (i+1, B_\mu(c)\downarrow)\ |\ m = (i+1, B_\sigma(c), D(c), \sum c \rightarrow \mathcal{P})$. It is worth noting that with this rule it is not possible to settle a zero amount because the balance amount $B_\mu(c)$ must go down!
 \begin{equation*}
@@ -269,6 +393,138 @@ The destination state is computed as
   \medskip
   \caption{Settlement after top up}
 \end{table}
+
+%\begin{figure}[h]\centering
+%    \begin{tikzpicture}
+%    \begin{axis}[
+%        xlabel={Balance [$B_\mu(c)$]},
+%        ylabel={Index [$I(c)$]},
+%        xmin=0, xmax=100,
+%        ymin=0, ymax=5,
+%        xtick={0,20,40,60,80,100},
+%        ytick={0,1,2,3,4},
+%        ymajorgrids=true,
+%        grid style=dashed,
+%    ]
+%     
+%    \addplot[
+%        color=black,
+%        mark=square,
+%        ]
+%        coordinates {
+%            (0,0)(25,0)(0,1)(70,1)
+%        };
+%     
+%    \addplot[
+%        color=red,
+%        mark=square,
+%        ]
+%        coordinates {
+%            (70,1)(50,1)
+%        };
+%     
+%    \end{axis}
+%    \end{tikzpicture}
+%    \caption{Invalid transition in states $M$ with $(I(c), B_\mu(c)) \rightarrow (I(c), B_\mu(c)\downarrow)$}
+%    \label{fig:invalidSettlement}
+%\end{figure}
+%
+%\begin{figure}[h]\centering
+%    \begin{tikzpicture}
+%    \begin{axis}[
+%        xlabel={Balance [$B_\mu(c)$]},
+%        ylabel={Index [$I(c)$]},
+%        xmin=0, xmax=100,
+%        ymin=0, ymax=5,
+%        xtick={0,20,40,60,80,100},
+%        ytick={0,1,2,3,4},
+%        ymajorgrids=true,
+%        grid style=dashed,
+%    ]
+%     
+%    \addplot[
+%        color=black,
+%        mark=square,
+%        ]
+%        coordinates {
+%            (0,0)(25,0)(0,1)(50,1)
+%        };
+%     
+%    \addplot[
+%        color=red,
+%        mark=square,
+%        ]
+%        coordinates {
+%            (50,1)(70,2)
+%        };
+%     
+%    \end{axis}
+%    \end{tikzpicture}
+%    \caption{Invalid transition in states $M$ with $(I(c), B_\mu(c)) \rightarrow (I(c)+1, B_\mu(c)\uparrow)$}
+%    \label{fig:invalidTopUp}
+%\end{figure}
+%
+%\begin{figure}[h]\centering
+%    \begin{tikzpicture}
+%    \begin{axis}[
+%        xlabel={Balance [$B_\mu(c)$]},
+%        ylabel={Index [$I(c)$]},
+%        xmin=0, xmax=100,
+%        ymin=0, ymax=5,
+%        xtick={0,20,40,60,80,100},
+%        ytick={0,1,2,3,4},
+%        ymajorgrids=true,
+%        grid style=dashed,
+%    ]
+%     
+%    \addplot[
+%        color=black,
+%        mark=square,
+%        ]
+%        coordinates {
+%            (0,0)(25,0)(0,1)(50,1)
+%        };
+%     
+%    \addplot[
+%        color=red,
+%        mark=square,
+%        ]
+%        coordinates {
+%            (50,1)(50,0)
+%        };
+%     
+%    \end{axis}
+%    \end{tikzpicture}
+%    \caption{Invalid transition in states$M$ with $(I(c), B_\mu(c)) \rightarrow (I(c)\downarrow, \_)$}
+%    \label{fig:invalidValidityIndex}
+%\end{figure}
+%
+%\begin{figure}[h]\centering
+%    \begin{tikzpicture}
+%    \begin{axis}[
+%        xlabel={Balance [$B_\mu(c)$]},
+%        ylabel={Index [$I(c)$]},
+%        xmin=0, xmax=100,
+%        ymin=0, ymax=5,
+%        xtick={0,20,40,60,80,100},
+%        ytick={0,1,2,3,4},
+%        ymajorgrids=true,
+%        grid style=dashed,
+%    ]
+%     
+%    \addplot[
+%        color=black,
+%        mark=square,
+%        ]
+%        coordinates {
+%            (0,0)(25,0)(0,1)(70,1)(50,2)(10,3)(60,3)(0,4)
+%        };
+%     
+%    \end{axis}
+%    \end{tikzpicture}
+%    \caption{Valid transitions in states $M$}
+%    \label{fig:validTransitions}
+%\end{figure}
 
 %
 % ---- Bibliography ----
