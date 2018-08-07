@@ -63,18 +63,19 @@
 
 \section{Introduction} 
 
-\section{Multi-client payment channels} Partially non-interactive multi-client payment channels are composed of clients $c \in \mathcal{C}$ and one provider $\mathcal{P}$. $\mathcal{C}$ is the set of all clients registred in the multi-client payment channel. Clients can send money to the provider through the channel $c \rightarrow \mathcal{P}$ but cannot recieve through the channel $\mathcal{P} \not\rightarrow c$.
+\section{Multi-clients payment channels} Partially non-interactive multi-clients payment channels are composed of clients $c \in \mathcal{C}$ and one provider $\mathcal{P}$. $\mathcal{C}$ is the set of all clients registred in the multi-clients payment channel. Clients can send money to the provider through the channel $c \rightarrow \mathcal{P}$ but cannot recieve through the channel $\mathcal{P} \not\rightarrow c$.
 
-A payment channel is by definition a structure composed of two layer of states. The first layer of states is registred to the blockchain, i.e. ``on-chain'' or contract states $\mu \in M$, and the second layer of states is kept ``off-chain'' between the participants, i.e. channel states $\sigma \in \Sigma$.
+A payment channel is by definition a structure composed of two layers of states. The first layer of states is registered to the blockchain, i.e. ``on-chain'' or contract states $\mu \in M$, and the second layer of states is kept ``off-chain'' between the participants, i.e. channel states $\sigma \in \Sigma$.
 
-It is possible to transition from a state $\sigma$ to another state $\sigma'$, we denote state transition with $\rightarrow$, i.e. $\sigma \rightarrow \sigma'$.  Modifiers $\omega \in \Omega$ are used to create transition on channel states $\sigma \in \Sigma$. A transition in $\Sigma$ depends on modifiers and contract states. We denote a transition from $\sigma, \sigma' \in \Sigma$ that depend on $\mu \in M$ and $\omega \in \Omega$ as
+It is possible to transition from a state $\sigma$ to another state $\sigma'$. We denote state transition with $\rightarrow$, i.e. $\sigma \rightarrow \sigma'$.  Modifiers $\omega \in \Omega$ are used to create transition on channel states $\sigma \in \Sigma$. A transition in $\Sigma$ depends on modifiers and contract states. We denote a transition from $\sigma, \sigma' \in \Sigma$ that depends on $\mu \in M$ and $\omega \in \Omega$ as
 $$\sigma \xrightarrow{\mu+\omega} \sigma'$$
 
-Messages allow transitions between two states $\mu, \mu' \in M$, also denoted $\mu \rightarrow \mu '$. A message $m$ can be ``applied'' to a state $\mu$, we denote this operation with $m(\mu)$, i.e. $\mu \xrightarrow{m} \mu'$. A message is created based on a channel state
-$$\sigma \implies m$$
+Contract state transitions are triggered by external events $e \in \mathcal{E}$ or messages $m \in \mathcal{M}$. Transitions between two states $\mu, \mu' \in M$ are denoted $\mu \rightarrow \mu '$. If the transition is due to an external event $e$ we write $\mu \xrightarrow{e} \mu '$. If the transition is due to a message $m$ we write $\mu \xrightarrow{m} \mu '$. Generic transitions are noted as $\mu \rightarrow \mu '$.
 
-\subsection{Contract states} Each client $c \in \mathcal{C}$ in the contract is defined by an on-chain state $\mu \in M$. States $\mu \in M$ are a tuple
-$$(I(c), B_\mu(c))$$
+A message $m$ can be ``applied'' to a state $\mu$, we denote this operation with $m(\mu)$, i.e. $\mu \xrightarrow{m} \mu'$. Messages are created based on a channel states. Each channel state $\sigma \in \Sigma$ can derive its corresponding message $m \in \mathcal{M}$
+$$\forall \sigma \in \Sigma,\ \exists m\ |\ m \in \mathcal{M}$$
+
+In reality it is not necessary to derive all messages. External events (top ups) afect the channel state but no messages are created because the previous generated message is still valid and usable to trigger a valid state transition in $M$.
 
 \subsection{Contract state variables} We define variables to acces the the contract state $\mu \in M$ for a client $c \in \mathcal{C}$.
 
@@ -82,38 +83,49 @@ $$(I(c), B_\mu(c))$$
 
 \subsubsection{Current on-chain balance, $B_\mu(c)$} For each client the current balance amount must be retreivable, $\forall c \in \mathcal{C}, \quad \exists B_\mu(c) \in \mu >= 0$.
 
-\subsection{Channel states} Each client $c \in \mathcal{C}$ is defined by his channel state $\sigma \in \Sigma$. States $\sigma \in \Sigma$ are composed of: (i) a validity index, (ii) the latest observed on-chain balance
-of the client, (iii) the total deposit of the client, and (iv) the total owned by the provider. We denote a state $\sigma \in \Sigma$ as
-$$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
+\subsection{Contract states} Each client $c \in \mathcal{C}$ in the contract is defined by an on-chain state $\mu \in M$. States $\mu \in M$ are a tuple
+$$(I(c), B_\mu(c))$$
 
-\subsection{Channel state variables} We define variables to represent: (i) the lifetime of a single channel in the multi-client channel architecture, (ii) the total amount deposited for a client over the lifetime, and (iii) the total amount own by the provider over the lifetime.
+\subsection{Channel state variables} We define variables to represent: (i) the lifetime of a single channel in the multi-clients channel architecture, (ii) the total amount deposited for a client over the lifetime, (iii) the total amount own by the provider over the lifetime, and (iv) the minimal and full available amount for the client.
 
-\subsubsection{Channel lifetime, $L(c \rightarrow \mathcal{P})$} It exists one lifetime and only one per elements in $\mathcal{C} \times \mathcal{P}$ and begin when the first deposit is made, i.e. one lifetime per client $c \in \mathcal{C}$.
+\subsubsection{Channel lifetime, $L(c \rightarrow \mathcal{P})$} It exists one lifetime and only one per element in $\mathcal{C} \times \mathcal{P}$ and begins when the first deposit is made, i.e. one lifetime per client $c \in \mathcal{C}$.
 
-\subsubsection{Total deposit, $D(c)$} Total deposit of a client represent the total amount recieved from the begin of the lifetime. Each top up increase the total deposit.
+\subsubsection{Total deposit, $D(c)$} Total deposit of a client $c$ represents the total amount recieved from the begining of the lifetime. Each top up increases the total deposit.
 
-\subsubsection{Total sent, $\sum c \rightarrow \mathcal{P}$} Total amount sent to the provider by a client represent the sum of all transaction since the begining of the lifetime. Each transaction increase the total sent.
+\subsubsection{Total sent, $\sum c \rightarrow \mathcal{P}$} Total amount sent to the provider by a client $c$ represents the sum of all transaction since the begining of the lifetime. Each transaction increases the total sent.
 
-\subsubsection{Minimal available amount, $A_m(c)$} Minimal amount available for a client is computed with the latest channel state $\sigma$. Without quering the contract state $\mu$ it is impossible to know if a bigger is now available.
+\subsubsection{Minimal available amount, $A_m(c)$} Minimal amount available for a client $c$ is computed with the latest channel state $\sigma$. Without quering the contract state $\mu$ it is impossible to know if a bigger amount is now available. The minimal available amount is computed with
+$$A_m(c) = D(c) - \textstyle \sum c \rightarrow \mathcal{P}$$
 
 \subsubsection{Client available amount, $A(c)$} The full amount available into a single channel for a client $c \in \mathcal{C}$ is computed with
 $$A(c) = D(c) - \textstyle \sum c \rightarrow \mathcal{P} + (B_\mu(c) - B_\sigma(c)), \quad B_\mu(c) \geq A(c)$$
 
-It is woth noting that $B_\mu(c) - B_\sigma(c)$ is added to the difference of total deposit and total sent in case of on-chain changements, like top up.
+It is worth noting that $B_\mu(c) - B_\sigma(c)$ is added to the difference of total deposit and total sent in case of on-chain changements, like top up.
+
+\subsection{Channel states} Each client $c \in \mathcal{C}$ is defined by their channel state $\sigma \in \Sigma$. States $\sigma \in \Sigma$ are composed of: (i) a validity index, (ii) the latest observed on-chain balance
+of the client, (iii) the total deposit of the client, and (iv) the total owned by the provider. We denote a state $\sigma \in \Sigma$ as
+$$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
 
 \subsection{Messages} Messages $m \in \mathcal{M}$ are exchanged between clients $\mathcal{C}$ and provider $\mathcal{P}$. A message is related to one and only one element in $\mathcal{C} \times \mathcal{P}$.
 
-\subsubsection{Minimal message} A minimal message $m \in \mathcal{M}$ between a client $c$ and the provider $\mathcal{P}$ is composed of four components: (i) a validity index, (ii) the lastest observed balance, (iii) the total of deposit, and (iv) the total own by the provider. We denote $m$ as the triple
-
+\subsubsection{Minimal message} A minimal message $m \in \mathcal{M}$ between a client $c$ and the provider $\mathcal{P}$ is composed of four components: (i) a validity index, (ii) the lastest observed balance, (iii) the total of deposit, and (iv) the total owned by the provider. We denote a message $m \in \mathcal{M}$ as
 $$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
 
-\subsection{Modifiers} Modifiers $\omega \in \Omega$ are input parameters that modify channel states $\sigma$. They encapsulate the channel capabilities. In multi-clients payment channel the capability is sending money through the channel, i.e. $c \rightarrow \mathcal{P}$.
+\subsubsection{Message derivation} Messages are derived from channel states $\Sigma$ as
+\begin{equation*}
+\begin{split}
+    \sigma &\implies m \\
+    (i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P}) &\implies (i+1, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P}) \\
+\end{split}
+\end{equation*}
 
-\subsubsection{Payment, $\omega(a)$} This modifier is used to increase $a$ amount the provider balance $O(\mathcal{P})$ from client $c$.
+\subsection{Modifiers} Modifiers $\omega \in \Omega$ are input parameters that modify channel states $\sigma$. They encapsulate the channel capabilities. In this multi-clients payment channel the capability is sending money through the channel from clients to provider, i.e. $c \rightarrow \mathcal{P}$.
+
+\subsubsection{Payment, $\omega(a)$} This modifier is used to increase the balance $O(\mathcal{P})$ of the provider of $a$ amount from a client $c$.
 
 \section{State transitions}
 
-\subsection{Contract state, $M$} Contract states $\mu \in M$ can transitioned $\mu \rightarrow \mu'$ because of a message $m \in \mathcal{M}$ or external events.
+\subsection{Contract state, $\mu \rightarrow \mu'$} Contract states $\mu \in M$ can transition $\mu \rightarrow \mu'$ because of a message $m \in \mathcal{M}$ or external events.
 
 \subsubsection{Settlement} $(i, B_\mu(c)) \xrightarrow{m} (i+1, B_\mu(c)\downarrow)\ |\ m = (i+1, B_\sigma(c), D(c), \sum c \rightarrow \mathcal{P})$. It is worth noting that with this rule it is not possible to settle a zero amount because the balance amount $B_\mu(c)$ must go down!
 \begin{equation*}
@@ -155,7 +167,7 @@ In that case the provider amount is
 \end{split}
 \end{equation*}
 
-\subsubsection{Top up} $(i, B_\mu(c)) \xrightarrow{e} (i, B_\mu(c)\uparrow)$. Top up increase the contract balance for a client $c \in \mathcal{C}$. Validity index $i$ must not be incremented during the top up.
+\subsubsection{Top up} $(i, B_\mu(c)) \xrightarrow{e} (i, B_\mu(c)\uparrow)$. Top up increases the contract balance for a client $c \in \mathcal{C}$. Validity index $i$ must not be incremented during the top up.
 
 \subsubsection{Invalid settlement} $(i, B_\mu(c)) \rightarrow (i, B_\mu(c)\downarrow)$. This transition is invalid because the balance is decreased without incrementing the validity index $i$. The current set of transactions must be invalidate after the settlement.
 
@@ -163,7 +175,7 @@ In that case the provider amount is
 
 \subsubsection{Invalid validity index} $(i, B_\mu(c)) \rightarrow (i\downarrow, \_)$ Decreasing the validity index $i$ is always invalid. Validity index must not be decreased.
 
-\subsection{Channel state, $\Sigma$} Channel state transitions $\sigma \xrightarrow{\mu + \omega} \sigma'$ for $\sigma, \sigma' \in \Sigma$, i.e. applying a modifier $\omega$ on the current state $\mu$ to result on $\sigma'$. The contract state $\mu$ must be query on-chain. The base channel state is
+\subsection{Channel state, $\sigma \rightarrow \sigma'$} Channel state transitions $\sigma \xrightarrow{\mu + \omega} \sigma'$ for $\sigma, \sigma' \in \Sigma$, i.e. applying a modifier $\omega$ on the current state $\mu$ to result on $\sigma'$. The contract state $\mu$ must be query on-chain. The base channel state is
 \begin{equation*}
 \begin{split}
   \sigma &=
