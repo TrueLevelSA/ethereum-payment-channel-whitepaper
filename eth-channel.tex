@@ -63,6 +63,11 @@
 
 \section{Introduction} 
 
+\subsubsection{Requirements Language}
+The key words ``MUST", ``MUST NOT", ``REQUIRED", ``SHALL", ``SHALL NOT",
+``SHOULD", ``SHOULD NOT", ``RECOMMENDED", ``MAY", and ``OPTIONAL" in this
+document are to be interpreted as described in RFC 2119 \cite{Bradner1997}.
+
 \section{Multi-clients payment channels} Partially non-interactive multi-clients payment channels are composed of clients $c \in \mathcal{C}$ and one provider $\mathcal{P}$. $\mathcal{C}$ is the set of all clients registred in the multi-clients payment channel. Clients can send money to the provider through the channel $c \rightarrow \mathcal{P}$ but cannot recieve through the channel $\mathcal{P} \not\rightarrow c$.
 
 A payment channel is by definition a structure composed of two layers of states. The first layer of states is registered to the blockchain, i.e. ``on-chain'' or contract states $\mu \in M$, and the second layer of states is kept ``off-chain'' between the participants, i.e. channel states $\sigma \in \Sigma$.
