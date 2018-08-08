@@ -304,6 +304,27 @@ In that case the provider amount is
 
 \subsubsection{Invalid validity index} $(i, B_\mu(c)) \rightarrow (i\downarrow, \_)$ Decreasing the validity index $i$ is always invalid. Validity index must not be decreased.
 
+\begin{table}[t]
+  \begin{tabularx}{\textwidth}{| S | S | C | C | C |}
+    \cline{2-5}
+      \multicolumn{1}{c|}{ } & $\omega$ & $\mu$ & $m$ & $\sigma$ \\ \cline{2-5}
+      \multicolumn{1}{c|}{ } & $\omega(a)$ & $(I(c), B_\mu(c))$ & $(i, B_\sigma(c), D(c), \sum)$ & $(i, B_\sigma(c), D(c), \sum)$ \\
+  \hhline{-====}
+      init & & $(0,10)$ & & $\emptyset$ \\
+      transact & $+1$ & & $(1, 10, 10, 1)$& $(0, 10, 10, 1)$ \\
+      transact & $+1$ & & $(1, 10, 10, 2)$& $(0, 10, 10, 2)$ \\
+      settle & & (1,8) & & \\
+      transact & $+2$  & & $(2, 8, 10, 4)$ & $(1, 8, 10, 4)$ \\
+      transact & $+2$  & & $(2, 8, 10, 6)$ & $(1, 8, 10, 6)$ \\
+      top up & & (1,18) & & $(1, 18, 20, 6)$ \\
+      transact & $+1$ & & $(2, 18, 20, 7)$ & $(1, 18, 20, 7)$ \\
+      settle & & (2,13) & & \\
+      \cline{1-5}
+  \end{tabularx}
+  \medskip
+  \caption{State transitions during channel lifetime}
+\end{table}
+
 \subsection{Channel state, $\sigma \rightarrow \sigma'$} Channel state transitions $\sigma \xrightarrow{\mu + \omega} \sigma'$ for $\sigma, \sigma' \in \Sigma$, i.e. applying a modifier $\omega$ on the current state $\mu$ to result on $\sigma'$. The contract state $\mu$ must be query on-chain. The base channel state is
 \begin{equation*}
 \begin{split}
@@ -337,42 +358,6 @@ The destination state is computed as
   \end{cases}
 \end{split}
 \end{equation*}
-%\section{Protocol} The protocol describe valid and invalid actions for clients and the provider, rules for state transition, and messages.
-%
-%\subsubsection{Client actions} A client can send money through the channel, authorize limited payment, and refund his money.
-%
-%\subsubsection{Provider actions} The provider can settle a single channel, and ``settle and close'' a single channel.
-%
-%\subsection{Send money, $c \rightarrow \mathcal{P}$} Two messages are generated: (i) a refund message for the client, and (ii) a settle message for the provider.
-%
-%\subsubsection{Refund message, $m_r$} Refund message $m_r$ must allow the client to claim his remaing funds $A(c \rightarrow \mathcal{P})$ and transfer them after some locktime if the provider does not dispute the refund. 
-%
-%\subsubsection{Settle message, $m_s$}
-%
-%
-%\section{Acknowledgement} Loan Ventura, Thomas Roulin and Nicolas Huguenin are acknowledged for their helpful contribution and comments during the completion of this work.
-
-\begin{table}[t]
-  \begin{tabularx}{\textwidth}{| S | S | C | C | C |}
-    \cline{2-5}
-      \multicolumn{1}{c|}{ } & $\omega$ & $\mu$ & $m$ & $\sigma$ \\ \cline{2-5}
-      \multicolumn{1}{c|}{ } & $\omega(a)$ & $(I(c), B_\mu(c))$ & $(i, B_\sigma(c), D(c), \sum)$ & $(i, B_\sigma(c), D(c), \sum)$ \\
-  \hhline{-====}
-      init & & $(0,10)$ & & $\emptyset$ \\
-      transact & $+1$ & & $(1, 10, 10, 1)$& $(0, 10, 10, 1)$ \\
-      transact & $+1$ & & $(1, 10, 10, 2)$& $(0, 10, 10, 2)$ \\
-      settle & & (1,8) & & \\
-      transact & $+2$  & & $(2, 8, 10, 4)$ & $(1, 8, 10, 4)$ \\
-      transact & $+2$  & & $(2, 8, 10, 6)$ & $(1, 8, 10, 6)$ \\
-      top up & & (1,18) & & $(1, 18, 20, 6)$ \\
-      transact & $+1$ & & $(2, 18, 20, 7)$ & $(1, 18, 20, 7)$ \\
-      settle & & (2,13) & & \\
-      \cline{1-5}
-  \end{tabularx}
-  \medskip
-  \caption{State transitions during channel lifetime}
-\end{table}
-
 
 \begin{table}[t]
   \begin{tabularx}{\textwidth}{| S | S | C | C | C |}
@@ -393,6 +378,35 @@ The destination state is computed as
   \medskip
   \caption{Settlement after top up}
 \end{table}
+
+\section{Protocol} The protocol describes interactions between clients and the provider and messages negociation. Protocol introduce a new component in the channel architecture, directives. Directives are the concrete implementation of messages and are distributed between client and provider.
+
+\subsubsection{Client actions} A client can send money through the channel and refund his money after some time if he submited the right message $m$ corresponding to the lastest channel state $\sigma$.
+
+\subsubsection{Provider actions} The provider can settle channels with his lastest message corresponding to the latest channel state.
+
+\subsubsection{Anyone actions} Anyone can top up a channel for himself or for another client.
+
+\subsection{Payment, $c \rightarrow \mathcal{P}$} Message $m \in \mathcal{M}$ is composed of two directives: (i) a refund directive for the client, and (ii) a settlement directive for the provider.
+
+\subsubsection{Refund directive, $d_r$} Refund directive $d_r$ allow the client to claim his remaing funds $A(c \rightarrow \mathcal{P})$ and transfer them after some delay if the provider is not able to dispute the claim. The provider is not able to dispute the claim if the directive come from the message generated by the latest channel state in $\Sigma$.
+\begin{equation*}
+\begin{split}
+    h &= \texttt{keccak256}(\texttt{contract},c,I(c),B_\sigma(c),D(c),\textstyle\Sigma c \rightarrow \mathcal{P}) \\
+    d_r &= \texttt{sign}(\texttt{prefix}, h) \quad \text{with $\mathcal{P}$ private key} \\
+\end{split}
+\end{equation*}
+
+\subsubsection{Settlement directive, $d_s$} Settlement directive $d_s$ allow the provider to claim imediately, i.e. without any delay, his owned amount for a specific channel.
+\begin{equation*}
+\begin{split}
+    h &= \texttt{keccak256}(\texttt{contract},c,I(c),B_\sigma(c),D(c),\textstyle\Sigma c \rightarrow \mathcal{P}) \\
+    d_r &= \texttt{sign}(\texttt{prefix}, h) \quad \text{with $c$ private key} \\
+\end{split}
+\end{equation*}
+
+
+%\section{Acknowledgement} Loan Ventura, Thomas Roulin and Nicolas Huguenin are acknowledged for their helpful contribution and comments during the completion of this work.
 
 %\begin{figure}[h]\centering
 %    \begin{tikzpicture}
