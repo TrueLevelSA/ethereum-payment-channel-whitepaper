@@ -93,8 +93,10 @@ In reality it is not necessary to derive all messages. External events (top ups)
 
 \subsubsection{Current on-chain balance, $B_\mu(c)$} For each client the current balance amount must be retreivable, $\forall c \in \mathcal{C}, \quad \exists B_\mu(c) \in \mu >= 0$.
 
+\subsubsection{Refund parameters, $R(c)$} For each client the current refund parameters must be retreivable, $\forall c \in \mathcal{C}, \quad \exists R(c) \in \mu$ such that $R(c)$ is the provider owned amount at the moment of the requested refund. The remaing money must go to the client.
+
 \subsection{Contract states} Each client $c \in \mathcal{C}$ in the contract is defined by an on-chain state $\mu \in M$. States $\mu \in M$ are a tuple
-$$(I(c), B_\mu(c))$$
+$$(I(c), B_\mu(c), R(c))$$
 
 \subsection{Channel state variables} We define variables to represent: (i) the lifetime of a single channel in the multi-clients channel architecture, (ii) the total amount deposited for a client over the lifetime, (iii) the total amount own by the provider over the lifetime, and (iv) the minimal and full available amount for the client.
 
@@ -156,7 +158,16 @@ $$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
         mark=square,
         ]
         coordinates {
-            (0,0)(25,0)(0,1)(70,1)(50,2)(10,3)(60,3)(0,4)
+            (0,0)(25,0)(0,1)(70,1)(50,2)(10,3)(60,3)
+        };
+
+    \addplot[
+        color=black,
+        mark=square,
+        dashed,
+        ]
+        coordinates {
+            (60,3)(60,4)(0,4)
         };
      
     \end{axis}
@@ -252,11 +263,14 @@ $$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
      
     \end{axis}
     \end{tikzpicture}}
-\caption{State transitions in $M$}
+\caption{State transitions in $M$, transitions in red are not allowed. Dashed transition are during refund process. The first step is the refund request, the second can be either claim, resolve, or dispute.}
 \label{fig:contractStateTransitions}
 \end{figure}
 
-\subsubsection{Settlement} $(i, B_\mu(c)) \xrightarrow{m} (i+1, B_\mu(c)\downarrow)\ |\ m = (i+1, B_\sigma(c), D(c), \sum c \rightarrow \mathcal{P})$. It is worth noting that with this rule it is not possible to settle a zero amount because the balance amount $B_\mu(c)$ must go down!
+\subsubsection{Settlement} $(I(c), B_\mu(c), R(c)) \xrightarrow{m} (I(c)+1, B_\mu(c)\downarrow, R(c))$ where
+$$m = (i, B_\sigma(c), D(c), \textstyle\sum c \rightarrow \mathcal{P})\ |\ i = I(c)+1$$
+
+It is worth noting that with this rule it is not possible to settle a zero amount because the balance amount $B_\mu(c)$ must go down!
 \begin{equation*}
 \begin{split}
     O(\mathcal{P}) &= B_\mu(c) - A(c) \\
@@ -274,51 +288,81 @@ $O(\mathcal{P})$ is the amount owned by the provider at the settlement time. The
 
 The new client balance is the current contract balance minus the the amount due to the provider.
 
-\subsubsection{Full refund} $(i, B_\mu(c)) \xrightarrow{m} (i+1, 0)\ |\ m = (i+1, B_\sigma(c), D(c), \sum c \rightarrow \mathcal{P})$. It is a full refund if the client available funds in the channel for the client are equal to the current contract balance
+\subsubsection{Refund} $(I(c), B_\mu(c),R(c)) \xrightarrow{m} (I(c)+1, B_\mu(c), R(c)')$ where
+$$m = (i, B_\sigma(c), D(c), \textstyle\sum c \rightarrow \mathcal{P})\ |\ i = I(c)+1$$
+
+It is a full refund if the client available funds in the channel for the client are equal to the current contract balance and a partial refund if the available funds of the client are smaller than the balance
 \begin{equation*}
 \begin{split}
-    B_\mu(c) &\overset{?}{=} A(c) \\
-    &\overset{?}{=} D(c) - \textstyle \sum c \rightarrow \mathcal{P} + (B_\mu(c) - B_\sigma(c)) \\
+    R(c)' &=
+  \begin{cases}
+      B_\mu(c) - A(c) & \quad \text{if } B_\mu(c) > A(c) \\
+      0 & \quad \text{if } B_\mu(c) = A(c) \\
+  \end{cases}
 \end{split}
 \end{equation*}
 
-\subsubsection{Partial refund} $(i, B_\mu(c)) \xrightarrow{m} (i+1, 0)\ |\ m = (i+1, B_\sigma(c), D(c), \sum c \rightarrow \mathcal{P})$. It is a partial refund if the client available funds in the channel are smaller than the current contract balance
-\begin{equation*}
-\begin{split}
-    B(c) &\overset{?}{>} A(c)
-\end{split}
-\end{equation*}
+%\begin{equation*}
+%\begin{split}
+%    B_\mu(c) &\overset{?}{=} A(c) \\
+%    &\overset{?}{=} D(c) - \textstyle \sum c \rightarrow \mathcal{P} + (B_\mu(c) - B_\sigma(c)) \\
+%\end{split}
+%\end{equation*}
+%
+%In that case 
+%$$R(c)' = (0,d)\ |\ d = \texttt{current\_block\_number} + \texttt{delay}$$
+%
+%If the client available funds in the channel are smaller than the current contract balance it is a partial refund
+%\begin{equation*}
+%\begin{split}
+%    B(c) &\overset{?}{>} A(c)
+%\end{split}
+%\end{equation*}
+%
+%In that case the provider amount is
+%\begin{equation*}
+%\begin{split}
+%    R(c)' &= (O(\mathcal{P}),d) \\
+%    d &= \texttt{current\_block\_number} + \texttt{delay} \\
+%    O(\mathcal{P}) &= B_\mu(c) - A(c)
+%\end{split}
+%\end{equation*}
 
-In that case the provider amount is
-\begin{equation*}
-\begin{split}
-    O(\mathcal{P}) &= B_\mu(c) - A(c)
-\end{split}
-\end{equation*}
+\subsubsection{Dispute} $(I(c), B_\mu(c),R(c)) \xrightarrow{m} (I(c), 0, 0)$ where
+$$m = (i, B_\sigma(c), D(c), \textstyle\sum c \rightarrow \mathcal{P})\ |\ i = I(c)$$
 
-\subsubsection{Top up} $(i, B_\mu(c)) \xrightarrow{e} (i, B_\mu(c)\uparrow)$. Top up increases the contract balance for a client $c \in \mathcal{C}$. Validity index $i$ must not be incremented during the top up.
+If $O(\mathcal{P}) > R(c)$ the provider won the dispute and $O(\mathcal{P})$ is transfer to the provider plus some penalities, the rest is sent to the client.
 
-\subsubsection{Invalid settlement} $(i, B_\mu(c)) \rightarrow (i, B_\mu(c)\downarrow)$. This transition is invalid because the balance is decreased without incrementing the validity index $i$. The current set of transactions must be invalidate after the settlement.
+\subsubsection{Resolve} $(I(c), B_\mu(c),R(c)) \xrightarrow{m} (I(c), 0, 0)$ where
+$$m = (i, B_\sigma(c), D(c), \textstyle\sum c \rightarrow \mathcal{P})\ |\ i = I(c)$$
 
-\subsubsection{Invalid top up} $(i, B_\mu(c)) \rightarrow (i+1, B_\mu(c)\uparrow)$ Increasing validity index $i$ while increasing the contract balance invalidates the set of transaction $i$. The current set of transactions must be invalidate only during a settlement.
+If $O(\mathcal{P}) = R(c)$ the provider accept the refund. $O(\mathcal{P})$ is transfer to the provider and the rest is sent to the client imediately.
 
-\subsubsection{Invalid validity index} $(i, B_\mu(c)) \rightarrow (i\downarrow, \_)$ Decreasing the validity index $i$ is always invalid. Validity index must not be decreased.
+\subsubsection{Top up} $(I(c), B_\mu(c),R(c)) \xrightarrow{e} (I(c), B_\mu(c)\uparrow,R(c))$. Top up increases the contract balance for a client $c \in \mathcal{C}$. Validity index $I(c)$ must not be incremented during the top up.
+
+\subsubsection{Invalid settlement} $(I(c), B_\mu(c),R(c)) \rightarrow (I(c), B_\mu(c)\downarrow,R(c))$. This transition is invalid because the balance is decreased without incrementing the validity index $I(c)$. The current set of transactions must be invalidate after the settlement.
+
+\subsubsection{Invalid top up} $(I(c), B_\mu(c),R(c)) \rightarrow (I(c)+1, B_\mu(c)\uparrow,R(c))$. Increasing validity index $I(c)$ while increasing the contract balance invalidates the set of transaction $I(c)$. The current set of transactions must be invalidate only during a settlement.
+
+\subsubsection{Invalid validity index} $(I(c), B_\mu(c),R(c)) \rightarrow (I(c)\downarrow, \_, \_)$. Decreasing the validity index $I(c)$ is always invalid. Validity index must not be decreased.
 
 \begin{table}[t]
   \begin{tabularx}{\textwidth}{| S | S | C | C | C |}
     \cline{2-5}
       \multicolumn{1}{c|}{ } & $\omega$ & $\mu$ & $m$ & $\sigma$ \\ \cline{2-5}
-      \multicolumn{1}{c|}{ } & $\omega(a)$ & $(I(c), B_\mu(c))$ & $(i, B_\sigma(c), D(c), \sum)$ & $(i, B_\sigma(c), D(c), \sum)$ \\
+      \multicolumn{1}{c|}{ } & $\omega(a)$ & $(I(c), B_\mu(c),R(c))$ & $(i, B_\sigma(c), D(c), \sum)$ & $(i, B_\sigma(c), D(c), \sum)$ \\
   \hhline{-====}
-      init & & $(0,10)$ & & $\emptyset$ \\
+      init & & $(0,10,0)$ & & $\emptyset$ \\
       transact & $+1$ & & $(1, 10, 10, 1)$& $(0, 10, 10, 1)$ \\
       transact & $+1$ & & $(1, 10, 10, 2)$& $(0, 10, 10, 2)$ \\
-      settle & & (1,8) & & \\
+      settle & & $(1,8,0)$ & & \\
       transact & $+2$  & & $(2, 8, 10, 4)$ & $(1, 8, 10, 4)$ \\
       transact & $+2$  & & $(2, 8, 10, 6)$ & $(1, 8, 10, 6)$ \\
-      top up & & (1,18) & & $(1, 18, 20, 6)$ \\
+      top up & & $(1,18,0)$ & & $(1, 18, 20, 6)$ \\
       transact & $+1$ & & $(2, 18, 20, 7)$ & $(1, 18, 20, 7)$ \\
-      settle & & (2,13) & & \\
+      settle & & $(2,13,0)$ & $(3,13,20,7)$ & $(2,13,20,7)$ \\
+      refund & & $(3,13,0)$ & & \\
+      claim & & $(3,0,0)$ & & \\
       \cline{1-5}
   \end{tabularx}
   \medskip
@@ -336,7 +380,7 @@ In that case the provider amount is
 \end{split}
 \end{equation*}
 
-\subsubsection{Payment, $\mu(I(c), B_\mu(c))+\omega(a)$} Payments trigger transition in channel states from a base state $\sigma$ to a destination state $\sigma'$ noted $\sigma \xrightarrow{\mu + \omega(a)} \sigma'$.
+\subsubsection{Payment, $\mu(I(c), B_\mu(c), R(c))+\omega(a)$} Payments trigger transition in channel states from a base state $\sigma$ to a destination state $\sigma'$ noted $\sigma \xrightarrow{\mu + \omega(a)} \sigma'$.
 The destination state is computed as
 \begin{equation*}
 \begin{split}
@@ -348,7 +392,7 @@ The destination state is computed as
 \end{split}
 \end{equation*}
 
-\subsubsection{Top up, $\mu(I(c), B_\mu(c) \uparrow)$} Each top up event modify the contract state $\mu$, then the channel state $\sigma$ must be updated to keep track of the real balance.
+\subsubsection{Top up, $\mu(I(c), B_\mu(c) \uparrow, R(c))$} Each top up event modify the contract state $\mu$, then the channel state $\sigma$ must be updated to keep track of the real balance.
 \begin{equation*}
 \begin{split}
   \sigma' &=
@@ -363,41 +407,35 @@ The destination state is computed as
   \begin{tabularx}{\textwidth}{| S | S | C | C | C |}
     \cline{2-5}
       \multicolumn{1}{c|}{ } & $\omega$ & $\mu$ & $m$ & $\sigma$ \\ \cline{2-5}
-      \multicolumn{1}{c|}{ } & $\omega(a)$ & $(I(c), B_\mu(c))$ & $(i, B_\sigma(c), D(c), \sum)$ & $(i, B_\sigma(c), D(c), \sum)$ \\
+      \multicolumn{1}{c|}{ } & $\omega(a)$ & $(I(c), B_\mu(c),R(c))$ & $(i, B_\sigma(c), D(c), \sum)$ & $(i, B_\sigma(c), D(c), \sum)$ \\
   \hhline{-====}
-      init & & $(0,3)$ & & $\emptyset$ \\
-      top up & & (0,5) & & $(0, 5, 5, 0)$ \\
+      init & & $(0,3,0)$ & & $\emptyset$ \\
+      top up & & $(0,5,0)$ & & $(0, 5, 5, 0)$ \\
       transact & $+3$ & & $(1, 5, 5, 3)$ & $(0, 5, 5, 3)$ \\
-      settle & & (1,2) & & \\
+      settle & & $(1,2,0)$ & & \\
       transact & $+1$ & & $(2, 2, 5, 4)$ & $(1, 2, 5, 4)$ \\
-      top up & & (1,4) & & $(1, 4, 7, 4)$ \\
-      settle & & (2,3) & & \\
+      top up & & $(1,4,0)$ & & $(1, 4, 7, 4)$ \\
+      settle & & $(2,3,0)$ & & \\
       transact & $+2$ & & $(3, 3, 7, 6)$ & $(2, 3, 7, 6)$ \\
+      refund & & $(3,3,2)$ & & \\
+      resolve & & $(3,0,0)$ & & $(3,0,7,6)$ \\
       \cline{1-5}
   \end{tabularx}
   \medskip
-  \caption{Settlement after top up}
+  \caption{Settlement after top up and refund resolved}
 \end{table}
 
 \section{Protocol} The protocol describes interactions between clients and the provider and messages negociation. Protocol introduce a new component in the channel architecture, directives. Directives are the concrete implementation of messages and are distributed between client and provider.
 
 \subsubsection{Client actions} A client can send money through the channel and refund his money after some time if he submited the right message $m$ corresponding to the lastest channel state $\sigma$.
 
-\subsubsection{Provider actions} The provider can settle channels with his lastest message corresponding to the latest channel state.
+\subsubsection{Provider actions} The provider can settle channels with his lastest message corresponding to the latest channel state. If a client requested a refund, the provider has the choice to dispute it or resolve it.
 
 \subsubsection{Anyone actions} Anyone can top up a channel for himself or for another client.
 
-\subsection{Payment, $c \rightarrow \mathcal{P}$} Message $m \in \mathcal{M}$ is composed of two directives: (i) a refund directive for the client, and (ii) a settlement directive for the provider.
+\subsection{Payment, $c \rightarrow \mathcal{P}$} Payment messages $m \in \mathcal{M}$ are composed of one directive for the provider signed by the client.
 
-\subsubsection{Refund directive, $d_r$} Refund directive $d_r$ allow the client to claim his remaing funds $A(c \rightarrow \mathcal{P})$ and transfer them after some delay if the provider is not able to dispute the claim. The provider is not able to dispute the claim if the directive come from the message generated by the latest channel state in $\Sigma$.
-\begin{equation*}
-\begin{split}
-    h &= \texttt{keccak256}(\texttt{contract},c,I(c),B_\sigma(c),D(c),\textstyle\Sigma c \rightarrow \mathcal{P}) \\
-    d_r &= \texttt{sign}(\texttt{prefix}, h) \quad \text{with $\mathcal{P}$ private key} \\
-\end{split}
-\end{equation*}
-
-\subsubsection{Settlement directive, $d_s$} Settlement directive $d_s$ allow the provider to claim imediately, i.e. without any delay, his owned amount for a specific channel.
+\subsubsection{Settle directive, $d_s$} Settle directive $d_s$ allow the provider to claim imediately, i.e. without any delay, his owned amount for a specific channel.
 \begin{equation*}
 \begin{split}
     h &= \texttt{keccak256}(\texttt{contract},c,I(c),B_\sigma(c),D(c),\textstyle\Sigma c \rightarrow \mathcal{P}) \\
@@ -405,6 +443,42 @@ The destination state is computed as
 \end{split}
 \end{equation*}
 
+\subsection{Refund} Refund messages $m \in \mathcal{M}$ are composed of one directive generated by the client and signed by the client. The provider must not be able to create directives $d_r$.
+
+\subsubsection{Refund directive, $d_r$} Refund directive $d_r$ allow the client to claim all the remaing funds $A(c \rightarrow \mathcal{P})$ and transfer them after some delay if the provider is not able to dispute the claim. The provider is not able to dispute the claim if the directive come from the message generated by the latest channel state in $\Sigma$.
+\begin{equation*}
+\begin{split}
+    h &= \texttt{keccak256}(\texttt{contract},c,I(c),O(\mathcal{P})) \\
+    d_r &= \texttt{sign}(\texttt{prefix}, h) \quad \text{with $c$ private key} \\
+\end{split}
+\end{equation*}
+
+A refund request can be closed in tree different maners
+\begin{equation*}
+\begin{split}
+    \text{close a refund by}
+  \begin{cases}
+      \text{dispute} & \quad \text{if the provider is able to prove a lie} \\
+      \text{resolve} & \quad \text{if the provider agrees} \\
+      \text{claim} & \quad \text{otherwise by the client after delay} \\
+  \end{cases}
+\end{split}
+\end{equation*}
+
+\subsection{Dispute refund} Disputes are won if the provider can prove that is owns a payment directive $d_s$ where
+$$O(\mathcal{P})' > O(\mathcal{P}), \quad O(\mathcal{P})' \in d_s \land O(\mathcal{P}) \in d_r$$
+
+with
+\begin{equation*}
+\begin{split}
+    O(\mathcal{P})' &= B_\mu(c) - A(c) \\
+    &= B_\mu(c) - (D(c) - \textstyle \sum c \rightarrow \mathcal{P} + (B_\mu(c) - B_\sigma(c))) \\
+\end{split}
+\end{equation*}
+
+\subsection{Resolve refund} Provider can choose to agree with the request and resolve it directly. By resolving the request the provider will get his remaing funds and send the client available funds $A(c)$ directly to the client. It is worth noting that the provider has no incentive to resolve request where $\sum c \rightarrow \mathcal{P} = 0$.
+
+\subsection{Claim refund} The client can claim his funds after the delay if the provider has not disputed nor resolved the request.
 
 %\section{Acknowledgement} Loan Ventura, Thomas Roulin and Nicolas Huguenin are acknowledged for their helpful contribution and comments during the completion of this work.
 
