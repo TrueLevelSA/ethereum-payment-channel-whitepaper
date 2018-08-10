@@ -85,17 +85,17 @@ Contract state transitions are triggered by external events $e \in \mathcal{E}$ 
 A message $m$ can be ``applied'' to a state $\mu$, we denote this operation with $m(\mu)$, i.e. $\mu \xrightarrow{m} \mu'$. Messages are created based on a channel states. Each channel state $\sigma \in \Sigma$ can derive its corresponding message $m \in \mathcal{M}$
 $$\forall \sigma \in \Sigma,\ \exists m\ |\ m \in \mathcal{M}$$
 
-In reality it is not necessary to derive all messages. External events (top ups) afect the channel state but no messages are created because the previous generated message is still valid and usable to trigger a valid state transition in $M$.
+In reality it is not necessary to derive all messages. Some external events (e.g. top ups) afect the channel states that trigger transitions in $\Sigma$, but correspondig messages are only created when needed.
 
-\subsection{Contract state variables} We define variables to acces the the contract state $\mu \in M$ for a client $c \in \mathcal{C}$.
+\subsection{Contract state variables} We define variables to acces the contract state $\mu \in M$ for a client $c \in \mathcal{C}$.
 
-\subsubsection{Current on-chain index, $I(c)$} For each client the current index $i$ must be retreivable, $\forall c \in \mathcal{C}, \quad \exists I(c) \in \mu >= 0$. The index for a client must start from $0$.
+\subsubsection{Current on-chain index, $I(c)$} For each client the current index $I(c)$ must be retreivable, $\forall c \in \mathcal{C}, \quad \exists I(c) \in \mu >= 0$. The index for a client must start from $0$.
 
 \subsubsection{Current on-chain balance, $B_\mu(c)$} For each client the current balance amount must be retreivable, $\forall c \in \mathcal{C}, \quad \exists B_\mu(c) \in \mu >= 0$.
 
-\subsubsection{Refund parameters, $R(c)$} For each client the current refund parameters must be retreivable, $\forall c \in \mathcal{C}, \quad \exists R(c) \in \mu$ such that $R(c)$ is the provider owned amount at the moment of the requested refund. The remaing money must go to the client.
+\subsubsection{Refund parameters, $R(c)$} For each client the current refund parameters must be retreivable, $\forall c \in \mathcal{C}, \quad \exists R(c) \in \mu$ such that $R(c)$ is the provider owned amount at the moment of the request. The remaing money must go to the client.
 
-\subsection{Contract states} Each client $c \in \mathcal{C}$ in the contract is defined by an on-chain state $\mu \in M$. States $\mu \in M$ are a tuple
+\subsection{Contract states} Each client $c \in \mathcal{C}$ in the contract is defined by an on-chain state $\mu \in M$. States $\mu \in M$ are represented as
 $$(I(c), B_\mu(c), R(c))$$
 
 \subsection{Channel state variables} We define variables to represent: (i) the lifetime of a single channel in the multi-clients channel architecture, (ii) the total amount deposited for a client over the lifetime, (iii) the total amount own by the provider over the lifetime, and (iv) the minimal and full available amount for the client.
@@ -104,7 +104,9 @@ $$(I(c), B_\mu(c), R(c))$$
 
 \subsubsection{Total deposit, $D(c)$} Total deposit of a client $c$ represents the total amount recieved from the begining of the lifetime. Each top up increases the total deposit.
 
-\subsubsection{Total sent, $\sum c \rightarrow \mathcal{P}$} Total amount sent to the provider by a client $c$ represents the sum of all transaction since the begining of the lifetime. Each transaction increases the total sent.
+\subsubsection{Total spent, $\sum c \rightarrow \mathcal{P}$} Total amount sent to the provider by a client $c$ represents the sum of all payments since the begining of the lifetime. Each payment increases the total sent.
+
+\subsubsection{Client refunded amount, $R_\sigma(c)$} Total amount refunded to the client $c$ since the begining of the lifetime. Each refund increases the total client refunded amount.
 
 \subsubsection{Minimal available amount, $A_m(c)$} Minimal amount available for a client $c$ is computed with the latest channel state $\sigma$. Without quering the contract state $\mu$ it is impossible to know if a bigger amount is now available. The minimal available amount is computed with
 $$A_m(c) = D(c) - \textstyle \sum c \rightarrow \mathcal{P}$$
@@ -115,10 +117,10 @@ $$A(c) = D(c) - \textstyle \sum c \rightarrow \mathcal{P} + (B_\mu(c) - B_\sigma
 It is worth noting that $B_\mu(c) - B_\sigma(c)$ is added to the difference of total deposit and total sent in case of on-chain changements, like top up.
 
 \subsection{Channel states} Each client $c \in \mathcal{C}$ is defined by their channel state $\sigma \in \Sigma$. States $\sigma \in \Sigma$ are composed of: (i) a validity index, (ii) the latest observed on-chain balance
-of the client, (iii) the total deposit of the client, and (iv) the total owned by the provider. We denote a state $\sigma \in \Sigma$ as
-$$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
+of the client, (iii) the total deposit of the client, (iv) the total owned by the provider, and (v) the client total refunded amount. We denote a state $\sigma \in \Sigma$ as
+$$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P},R_\sigma(c))$$
 
-\subsection{Messages} Messages $m \in \mathcal{M}$ are exchanged between clients $\mathcal{C}$ and provider $\mathcal{P}$. A message is related to one and only one element in $\mathcal{C} \times \mathcal{P}$.
+\subsection{Messages} Messages $m \in \mathcal{M}$ are simplifications of channel states that allow exchanges between clients $\mathcal{C}$ and provider $\mathcal{P}$. A message is related to one and only one element in $\mathcal{C} \times \mathcal{P}$ for only one $\sigma \in \Sigma$.
 
 \subsubsection{Minimal message} A minimal message $m \in \mathcal{M}$ between a client $c$ and the provider $\mathcal{P}$ is composed of four components: (i) a validity index, (ii) the lastest observed balance, (iii) the total of deposit, and (iv) the total owned by the provider. We denote a message $m \in \mathcal{M}$ as
 $$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
@@ -127,11 +129,11 @@ $$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
 \begin{equation*}
 \begin{split}
     \sigma &\implies m \\
-    (i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P}) &\implies (i+1, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P}) \\
+    (i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P},R_\sigma(c)) &\implies (i+1, B_\sigma(c), D(c)-R_\sigma(c), \textstyle \sum c \rightarrow \mathcal{P}) \\
 \end{split}
 \end{equation*}
 
-\subsection{Modifiers} Modifiers $\omega \in \Omega$ are input parameters that modify channel states $\sigma$. They encapsulate the channel capabilities. In this multi-clients payment channel the capability is sending money through the channel from clients to provider, i.e. $c \rightarrow \mathcal{P}$.
+\subsection{Modifiers} Modifiers $\omega \in \Omega$ are input parameters that modify channel states $\sigma$. They are not related to any solidity principles. They encapsulate the channel capabilities. In this multi-clients payment channel the capability is sending money through the channel from clients to provider, i.e. $c \rightarrow \mathcal{P}$.
 
 \subsubsection{Payment, $\omega(a)$} This modifier is used to increase the balance $O(\mathcal{P})$ of the provider of $a$ amount from a client $c$.
 
@@ -172,7 +174,7 @@ $$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
      
     \end{axis}
     \end{tikzpicture}}
-\subfloat[$(I(c), B_\mu(c)) \rightarrow (I(c)+1, B_\mu(c)\uparrow)$]{
+\subfloat[$(I,B_\mu,R) \rightarrow (I+1, B_\mu\uparrow,R)$]{
     \begin{tikzpicture}
     \begin{axis}[
         xlabel={Balance [$B_\mu(c)$]},
@@ -202,7 +204,7 @@ $$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
      
     \end{axis}
     \end{tikzpicture}}\\
-\subfloat[$(I(c), B_\mu(c)) \rightarrow (I(c)\downarrow, \_)$]{
+\subfloat[$(I, B_\mu,R) \rightarrow (I\downarrow,\_,R)$]{
     \begin{tikzpicture}
     \begin{axis}[
         xlabel={Balance [$B_\mu(c)$]},
@@ -233,7 +235,7 @@ $$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
      
     \end{axis}
     \end{tikzpicture}}
-\subfloat[$(I(c), B_\mu(c)) \rightarrow (I(c), B_\mu(c)\downarrow)$]{
+\subfloat[$(I,B_\mu,R) \rightarrow (I, B_\mu\downarrow,R)$]{
     \begin{tikzpicture}
     \begin{axis}[
         xlabel={Balance [$B_\mu(c)$]},
@@ -350,56 +352,121 @@ If $O(\mathcal{P}) = R(c)$ the provider accept the refund. $O(\mathcal{P})$ is t
   \begin{tabularx}{\textwidth}{| S | S | C | C | C |}
     \cline{2-5}
       \multicolumn{1}{c|}{ } & $\omega$ & $\mu$ & $m$ & $\sigma$ \\ \cline{2-5}
-      \multicolumn{1}{c|}{ } & $\omega(a)$ & $(I(c), B_\mu(c),R(c))$ & $(i, B_\sigma(c), D(c), \sum)$ & $(i, B_\sigma(c), D(c), \sum)$ \\
-  \hhline{-====}
-      init & & $(0,10,0)$ & & $\emptyset$ \\
-      transact & $+1$ & & $(1, 10, 10, 1)$& $(0, 10, 10, 1)$ \\
-      transact & $+1$ & & $(1, 10, 10, 2)$& $(0, 10, 10, 2)$ \\
-      settle & & $(1,8,0)$ & & \\
-      transact & $+2$  & & $(2, 8, 10, 4)$ & $(1, 8, 10, 4)$ \\
-      transact & $+2$  & & $(2, 8, 10, 6)$ & $(1, 8, 10, 6)$ \\
-      top up & & $(1,18,0)$ & & $(1, 18, 20, 6)$ \\
-      transact & $+1$ & & $(2, 18, 20, 7)$ & $(1, 18, 20, 7)$ \\
-      settle & & $(2,13,0)$ & $(3,13,20,7)$ & $(2,13,20,7)$ \\
-      refund & & $(3,13,0)$ & & \\
-      claim & & $(3,0,0)$ & & \\
+      \multicolumn{1}{c|}{ } & $\omega(a)$ & $(I,B_\mu,R)$ & $(i,B_\sigma,D,\sum)$ & $(i,B_\sigma,D,\sum,R_\sigma)$ \\
+  \hhline{~====}
+      \multicolumn{1}{c|}{ } & & $(0,0,0)$ & & $\emptyset$ \\ \cline{1-1}
+      top up & & $(0,10,0)$ & & $(0,10,10,0,0)$ \\
+      payment & $+1$ & & $(1, 10, 10, 1)$& $(0, 10, 10, 1, 0)$ \\
+      payment & $+1$ & & $(1, 10, 10, 2)$& $(0, 10, 10, 2, 0)$ \\
+      settle & & $(1,8,0)$ & & $(1,8,10,2,0)$ \\
+      payment & $+2$  & & $(2, 8, 10, 4)$ & $(1, 8, 10, 4, 0)$ \\
+      payment & $+2$  & & $(2, 8, 10, 6)$ & $(1, 8, 10, 6, 0)$ \\
+      top up & & $(1,18,0)$ & & $(1, 18, 20, 6, 0)$ \\
+      payment & $+1$ & & $(2, 18, 20, 7)$ & $(1, 18, 20, 7, 0)$ \\
+      settle & & $(2,13,0)$ & $(3,13,20,7)$ & $(2,13,20,7,0)$ \\
+      refund & & $(3,13,0)$ & & $(3,13,20,7,0)$ \\
+      claim & & $(3,0,0)$ & & $(3,13,20,7,13)$ \\
       \cline{1-5}
   \end{tabularx}
   \medskip
   \caption{State transitions during channel lifetime}
 \end{table}
 
-\subsection{Channel state, $\sigma \rightarrow \sigma'$} Channel state transitions $\sigma \xrightarrow{\mu + \omega} \sigma'$ for $\sigma, \sigma' \in \Sigma$, i.e. applying a modifier $\omega$ on the current state $\mu$ to result on $\sigma'$. The contract state $\mu$ must be query on-chain. The base channel state is
+\subsection{Channel state, $\sigma \rightarrow \sigma'$} Channel state transitions $\sigma \xrightarrow{\mu + \omega} \sigma'$ for $\sigma, \sigma' \in \Sigma$, i.e. applying a modifier $\omega$ on the current state $\mu$ to result on $\sigma'$, are triggered by a modifier or transition in $M$, i.e. $\mu \rightarrow \mu'$. The contract state $\mu$ must be query on-chain. The base channel state is
 \begin{equation*}
 \begin{split}
   \sigma &=
   \begin{cases}
     \emptyset & \quad \text{if no previous state exists} \\
-    (i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P}) & \quad \text{otherwise}
+      (i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P},R_\sigma(c)) & \quad \text{otherwise}
   \end{cases}
 \end{split}
 \end{equation*}
 
-\subsubsection{Payment, $\mu(I(c), B_\mu(c), R(c))+\omega(a)$} Payments trigger transition in channel states from a base state $\sigma$ to a destination state $\sigma'$ noted $\sigma \xrightarrow{\mu + \omega(a)} \sigma'$.
-The destination state is computed as
+\subsubsection{Payment, $\mu(I(c), B_\mu(c), R(c))+\omega(a)$.} Payments trigger transition in channel states from a base state $\sigma$ to a destination state $\sigma'$ noted $\sigma \xrightarrow{\mu + \omega(a)} \sigma'$.
+The destination channel state is computed as
 \begin{equation*}
 \begin{split}
   \sigma' &=
   \begin{cases}
-      (I(c), B_\mu(c), B_\mu(c), a) & \quad \text{if } \sigma = \emptyset \\
-      (I(c), B_\mu(c), D(c), \textstyle \sum c \rightarrow \mathcal{P}+a) & \quad \text{otherwise}
+      \emptyset & \quad \text{if } \sigma = \emptyset \\
+      (I(c), B_\mu(c), D(c), \textstyle \sum c \rightarrow \mathcal{P}+a,R_\sigma(c)) & \quad \text{otherwise}
   \end{cases}
 \end{split}
 \end{equation*}
 
-\subsubsection{Top up, $\mu(I(c), B_\mu(c) \uparrow, R(c))$} Each top up event modify the contract state $\mu$, then the channel state $\sigma$ must be updated to keep track of the real balance.
+Payments cannot be accepted without a previous state. If $\sigma = \emptyset$ then the channel is not initialized yet and must be before any payments.
+
+\subsubsection{Top up, $\mu(I(c), B_\mu(c), R(c)) \rightarrow \mu(I(c), B_\mu(c) \uparrow, R(c))$.} Each top up event modify the contract state $\mu$, then the channel state $\sigma$ must be updated to keep track of the real balance. The destination channel state is computed as \begin{equation*}
+\begin{split}
+  \sigma' &=
+  \begin{cases}
+      (0, B_\mu(c), B_\mu(c), 0, 0) & \quad \text{if } \sigma = \emptyset \\
+      (I(c), B_\mu(c), D(c) + (B_\mu(c) - B_\sigma(c)), \textstyle \sum c \rightarrow \mathcal{P},R_\sigma(c)) & \quad \text{otherwise}
+  \end{cases}
+\end{split}
+\end{equation*}
+
+It is worth noting that if no previous state exists the channel is initialized and the first state is created.
+
+\subsubsection{Settle, $\mu(I(c), B_\mu(c), R(c)) \rightarrow \mu(I(c), B_\mu(c) \downarrow, R(c))$.} Settlements trigger transition in contract state $\mu \rightarrow \mu'$ and then the channel state $\sigma$ must be updated as 
 \begin{equation*}
 \begin{split}
   \sigma' &=
   \begin{cases}
-      (I(c), B_\mu(c), B_\mu(c), 0) & \quad \text{if } \sigma = \emptyset \\
-      (I(c), B_\mu(c), D(c) + (B_\mu(c) - B_\sigma(c)), \textstyle \sum c \rightarrow \mathcal{P}) & \quad \text{otherwise}
+      \emptyset & \quad \text{if } \sigma = \emptyset \\
+      (I(c), B_\mu(c), D(c), \textstyle \sum c \rightarrow \mathcal{P},R_\sigma(c)) & \quad \text{otherwise}
   \end{cases}
+\end{split}
+\end{equation*}
+
+\subsubsection{Refund, $\mu(I(c), B_\mu(c), R(c)) \rightarrow \mu(I(c)+1, B_\mu(c), R(c)')\ |\ R(c)' \geq 0$.} Clients can ask for refund and modify the contract state then the channel state must be updated as
+\begin{equation*}
+\begin{split}
+  \sigma' &=
+  \begin{cases}
+      \emptyset & \quad \text{if } \sigma = \emptyset \\
+      (I(c), B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P}, R_\sigma(c)) & \quad \text{otherwise}
+  \end{cases}
+\end{split}
+\end{equation*}
+
+and the state of the channel must enter is ``refund mode'' until the refund is ended with either a dispute, resolve, or a claim. During this periode client must not send new payments to prevent the provider to successfully dispute the refund (even if updating the channel state to $i = I(c)+1$ normlay prevent negociating payment for $i = I(c)$.)
+
+\subsubsection{Dispute, $\mu(I(c), B_\mu(c), R(c)) \rightarrow \mu(I(c), 0, 0)$.} When request refunds are resolved with a dispute the provider can take what he owns during the dispute plus some penalties $\mathcal{E}$. 
+
+\begin{equation*}
+\begin{split}
+  \sigma' &=
+  \begin{cases}
+      \emptyset & \quad \text{if } \sigma = \emptyset \\
+      (I(c), 0, D(c), \textstyle \sum c \rightarrow \mathcal{P} + \mathcal{E},B_\mu(c) - R(c) - \mathcal{E}) & \quad \text{otherwise}
+  \end{cases}
+\end{split}
+\end{equation*}
+
+where
+\begin{equation*}
+\begin{split}
+    D(c) &= \textstyle\sum c \rightarrow \mathcal{P} + R_\sigma(c)
+\end{split}
+\end{equation*}
+
+\subsubsection{Resolve \& Claim, $\mu(I(c), B_\mu(c), R(c)) \rightarrow \mu(I(c), 0, 0)$.} Provider can resolve a refund request by submitting the settle directive $d_s$ and then accept the request or, a client can claim his funds after the delay. In both cases the contract state $\mu$ changes, then the channel state must be updated as
+\begin{equation*}
+\begin{split}
+  \sigma' &=
+  \begin{cases}
+      \emptyset & \quad \text{if } \sigma = \emptyset \\
+      (I(c), 0, D(c), \textstyle \sum c \rightarrow \mathcal{P},B_\mu(c) - R(c)) & \quad \text{otherwise}
+  \end{cases}
+\end{split}
+\end{equation*}
+
+where
+\begin{equation*}
+\begin{split}
+    D(c) &= \textstyle\sum c \rightarrow \mathcal{P} + R_\sigma(c)
 \end{split}
 \end{equation*}
 
@@ -407,18 +474,20 @@ The destination state is computed as
   \begin{tabularx}{\textwidth}{| S | S | C | C | C |}
     \cline{2-5}
       \multicolumn{1}{c|}{ } & $\omega$ & $\mu$ & $m$ & $\sigma$ \\ \cline{2-5}
-      \multicolumn{1}{c|}{ } & $\omega(a)$ & $(I(c), B_\mu(c),R(c))$ & $(i, B_\sigma(c), D(c), \sum)$ & $(i, B_\sigma(c), D(c), \sum)$ \\
-  \hhline{-====}
-      init & & $(0,3,0)$ & & $\emptyset$ \\
-      top up & & $(0,5,0)$ & & $(0, 5, 5, 0)$ \\
-      transact & $+3$ & & $(1, 5, 5, 3)$ & $(0, 5, 5, 3)$ \\
-      settle & & $(1,2,0)$ & & \\
-      transact & $+1$ & & $(2, 2, 5, 4)$ & $(1, 2, 5, 4)$ \\
-      top up & & $(1,4,0)$ & & $(1, 4, 7, 4)$ \\
-      settle & & $(2,3,0)$ & & \\
-      transact & $+2$ & & $(3, 3, 7, 6)$ & $(2, 3, 7, 6)$ \\
-      refund & & $(3,3,2)$ & & \\
-      resolve & & $(3,0,0)$ & & $(3,0,7,6)$ \\
+      \multicolumn{1}{c|}{ } & $\omega(a)$ & $(I,B_\mu,R)$ & $(i,B_\sigma,D,\sum)$ & $(i,B_\sigma,D,\sum,R_\sigma)$ \\
+  \hhline{~====}
+      \multicolumn{1}{c|}{ } & & $(0,0,0)$ & & $\emptyset$ \\ \cline{1-1}
+      top up & & $(0,3,0)$ & & $(0,3,3,0,0)$ \\
+      top up & & $(0,5,0)$ & & $(0, 5, 5, 0,0)$ \\
+      payment & $+3$ & & $(1, 5, 5, 3)$ & $(0, 5, 5, 3,0)$ \\
+      settle & & $(1,2,0)$ & & $(1,2,5,3,0)$ \\
+      payment & $+1$ & & $(2, 2, 5, 4)$ & $(1, 2, 5, 4,0)$ \\
+      top up & & $(1,4,0)$ & & $(1, 4, 7, 4,0)$ \\
+      settle & & $(2,3,0)$ & & $(2,3,7,4,0)$ \\
+      payment & $+2$ & & $(3, 3, 7, 6)$ & $(2, 3, 7, 6,0)$ \\
+      refund & & $(3,3,2)$ & & $(3, 3, 7, 6,0)$ \\
+      top up & & $(3,13,2)$ & & $(3, 13, 17, 6,0)$ \\
+      resolve & & $(3,0,0)$ & & $(3,0,17,6,11)$ \\
       \cline{1-5}
   \end{tabularx}
   \medskip
