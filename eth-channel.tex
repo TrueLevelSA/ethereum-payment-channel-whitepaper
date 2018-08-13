@@ -365,7 +365,7 @@ If $O(\mathcal{P}) = R(c)$ the provider accept the refund. $O(\mathcal{P})$ is t
       payment & $+1$ & & $(2, 18, 20, 7)$ & $(1, 18, 20, 7, 0)$ \\
       settle & & $(2,13,0)$ & $(3,13,20,7)$ & $(2,13,20,7,0)$ \\
       refund & & $(3,13,0)$ & & $(3,13,20,7,0)$ \\
-      claim & & $(3,0,0)$ & & $(3,13,20,7,13)$ \\
+      claim & & $(3,0,0)$ & & $(3,0,20,7,13)$ \\
       \cline{1-5}
   \end{tabularx}
   \medskip
@@ -445,7 +445,7 @@ and the state of the channel must enter is ``refund mode'' until the refund is e
 \end{split}
 \end{equation*}
 
-where
+such that
 \begin{equation*}
 \begin{split}
     D(c) &= \textstyle\sum c \rightarrow \mathcal{P} + R_\sigma(c)
@@ -463,7 +463,7 @@ where
 \end{split}
 \end{equation*}
 
-where
+such that
 \begin{equation*}
 \begin{split}
     D(c) &= \textstyle\sum c \rightarrow \mathcal{P} + R_\sigma(c)
