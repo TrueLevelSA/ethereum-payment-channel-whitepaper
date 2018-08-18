@@ -66,87 +66,216 @@
 \begin{abstract} Ethereum is a distributed computing platform and operating system featuring smart contract functionality. Transactions are faster than other blockchain but not instant and each of them cost some ``gas''. This gas is used to quantify the amount of fee to pay for computation. \keywords{Crypto-currencies, Ethereum, Payment channels}
 \end{abstract}
 
-\section{Introduction} 
+\section{Introduction}
 
 \subsubsection{Requirements Language}
 The key words ``MUST", ``MUST NOT", ``REQUIRED", ``SHALL", ``SHALL NOT",
 ``SHOULD", ``SHOULD NOT", ``RECOMMENDED", ``MAY", and ``OPTIONAL" in this
 document are to be interpreted as described in RFC 2119 \cite{Bradner1997}.
 
-\section{Multi-clients payment channels} Partially non-interactive multi-clients payment channels are composed of clients $c \in \mathcal{C}$ and one provider $\mathcal{P}$. $\mathcal{C}$ is the set of all clients registred in the multi-clients payment channel. Clients can send money to the provider through the channel $c \rightarrow \mathcal{P}$ but cannot recieve through the channel $\mathcal{P} \not\rightarrow c$.
+\section{Multi-clients payment channels} Partially non-interactive multi-clients payment channels are composed of clients $c \in \mathcal{C}$ and one provider $\mathcal{P}$. $\mathcal{C}$ is the set of all clients registred in the multi-clients payment channel. Clients can send money to the provider through the channel but cannot recieve through the channel.
 
-A payment channel is by definition a structure composed of two layers of states. The first layer of states is registered to the blockchain, i.e. ``on-chain'' or contract states $\mu \in M$, and the second layer of states is kept ``off-chain'' between the participants, i.e. channel states $\sigma \in \Sigma$.
+A payment channel is by definition a structure composed of two layers of states. The first layer of states is registered to the blockchain, i.e. ``on-chain'' or contract states $\mu \in M$, and the second layer of states is kept ``off-chain'' between the participants and the provider, i.e. channel states $\sigma \in \Sigma$. States are sets of deltas. A delta represent an atomic change in a state. Delta changes $\delta \in \Delta$ are used to transition from one state to another.
 
-It is possible to transition from a state $\sigma$ to another state $\sigma'$. We denote state transition with $\rightarrow$, i.e. $\sigma \rightarrow \sigma'$.  Modifiers $\omega \in \Omega$ are used to create transition on channel states $\sigma \in \Sigma$. A transition in $\Sigma$ depends on modifiers and contract states. We denote a transition from $\sigma, \sigma' \in \Sigma$ that depends on $\mu \in M$ and $\omega \in \Omega$ as
-$$\sigma \xrightarrow{\mu+\omega} \sigma'$$
+Each client have a pair of states $(\mu_c, \sigma_c)$ shared with the provider. Only the latest pair is relevent, for each transition the new state in $\Sigma$ or $M$ is kept. We denote $\mu_c$ and $\sigma_c$ the contract and channel states for a client $c \in \mathcal{C}$. Hereinafter it is implied that all $\mu, \sigma$ correspond to one specific and only one client at the same time, but we forget $c$ to simplifie the notation.
 
-Contract state transitions are triggered by external events $e \in \mathcal{E}$ or messages $m \in \mathcal{M}$. Transitions between two states $\mu, \mu' \in M$ are denoted $\mu \rightarrow \mu '$. If the transition is due to an external event $e$ we write $\mu \xrightarrow{e} \mu '$. If the transition is due to a message $m$ we write $\mu \xrightarrow{m} \mu '$. Generic transitions are noted as $\mu \rightarrow \mu '$.
+Transition from a state to another state are denoted with $\rightarrow$, e.g. $\sigma \rightarrow \sigma'$ or $\mu \rightarrow \mu'$. Transitions in $\Sigma$ depends on particular deltas in $\Delta_\sigma$ noted $\delta_\sigma$. We denote a transition from $\sigma, \sigma' \in \Sigma$ that depends on $\delta_\sigma \in \Delta_\sigma$ as
+$$\sigma \xrightarrow{\delta_\sigma} \sigma'$$
 
-A message $m$ can be ``applied'' to a state $\mu$, we denote this operation with $m(\mu)$, i.e. $\mu \xrightarrow{m} \mu'$. Messages are created based on a channel states. Each channel state $\sigma \in \Sigma$ can derive its corresponding message $m \in \mathcal{M}$
-$$\forall \sigma \in \Sigma,\ \exists m\ |\ m \in \mathcal{M}$$
+And transitions in $M$ depending on particular deltas in $\Delta_\mu$ noted $\delta_\mu$ as
+$$\mu \xrightarrow{\delta_\mu} \mu'$$
 
-In reality it is not necessary to derive all messages. Some external events (e.g. top ups) afect the channel states that trigger transitions in $\Sigma$, but correspondig messages are only created when needed.
+Transitivity law is applied on transitions. If it exists a transition from a state $s$ to another state $s'$ that depends on $t$ and $s'$ to $s''$ depending on $t'$, then it exists a transition from $s$ to $s''$ as
+$$s \xrightarrow{t} s' \land s' \xrightarrow{t'} s'' \implies s \xrightarrow{t + t'} s''$$
 
+Layers are linked tougether, changes in contract layer affect the channel layer and the channel layer can be dictated, or applied, on the contract layer. The full transition rule for contract states is define as
+$$\mu \xrightarrow{\delta_\mu \lor \sigma} \mu'$$
+
+and the full transition rule for channel states as
+$$\sigma \xrightarrow{\delta_\sigma \lor \mu \rightarrow \mu'} \sigma'$$
+
+We can notice that each transition in contract states $M$ are also applied in channel states $\Sigma$. We denote the application of $\sigma$ on $\mu$, i.e. dictate a channel state on the contract layer, also as $\sigma(\mu) = \mu'$.
+
+States are represented as sets of deltas $\delta \in \Delta$ and transitions are bounded to conditions. We define how to compute the resulted state.
+\begin{equation*}
+\begin{split}
+    \mu \xrightarrow{\delta_\mu} \mu' &: \quad \mu' = \mu \cup \{\delta_\mu\} \\
+    \mu \xrightarrow{\sigma} \mu' &: \quad \mu' = \mu \cup \sigma \\
+    \sigma \xrightarrow{\delta_\sigma} \sigma' &: \quad \sigma' = \sigma \cup \{ \delta_\sigma \}  \\
+    \sigma \xrightarrow{\mu \xrightarrow{\delta_\mu} \mu'} \sigma' &: \quad \sigma' =  \sigma \cup \mu' \lor \sigma \cup \{ \delta_\mu \} \\
+    \sigma \xrightarrow{\mu \xrightarrow{\sigma''} \mu'} \sigma' &: \quad \sigma' = \mu' \\
+\end{split}
+\end{equation*}
+
+It is worth noting that the last rule $\sigma \xrightarrow{\mu \xrightarrow{\sigma''} \mu'} \sigma'$ has implication on the validity of deltas. Because the resulting channel state $\sigma'$ is equal to the contract state $\mu'$, all deltas $\delta_\sigma$ applied between the dictated state $\sigma''$ and the starting state $\sigma$, where $\sigma'' \preceq \sigma$, are discarded. If we have
+\begin{equation*}
+\begin{split}
+    &\emptyset \xrightarrow{\emptyset \xrightarrow{\delta_\mu} \mu_1} \sigma_1 \xrightarrow{\delta_\sigma} \sigma_2 \xrightarrow{\delta_\sigma'} \sigma_3 \xrightarrow{\mu_1 \xrightarrow{\sigma_2} \mu_2} \sigma_4\\
+    &\emptyset \xrightarrow{\delta_\mu} \mu_1 \xrightarrow{\sigma_2} \mu_2 \\
+\end{split}
+\end{equation*}
+%\begin{equation*}
+%\begin{align*}
+%    &\emptyset &\xrightarrow{\emptyset \xrightarrow{\delta_\mu} \mu_1}& &\sigma_1 &\xrightarrow{\delta_\sigma}& &\sigma_2 &\xrightarrow{\delta_\sigma'}& &\sigma_3 &\xrightarrow{\mu_1 \xrightarrow{\sigma_2} \mu_2}& &\sigma_4\\
+%    &\emptyset &\xrightarrow{\delta_\mu}& &\mu_1 &\xrightarrow{\sigma_2}& && && && &\mu_2 \\
+%\end{align*}
+%\end{equation*}
+
+We see that all channel states based on $\sigma_4$ will never contain $\delta_\sigma'$ becase the dictated channel state used is $\sigma_2$ and not $\sigma_3$.
+\begin{align*}
+    \mu_1    &= \emptyset \cup \{\delta_\mu\} & &= \{\delta_\mu\} \\
+    \sigma_1 &= \emptyset \cup \{\delta_\mu\} & &= \{\delta_\mu\} \\
+    \sigma_2 &= \{\delta_\mu\} \cup \{\delta_\sigma\} & &= \{\delta_\mu,\delta_\sigma\} \\
+    \sigma_3 &= \{\delta_\mu,\delta_\sigma\}\cup\{\delta_\sigma'\} & &= \{\delta_\mu,\delta_\sigma,\delta_\sigma'\} \\
+    \mu_2    &= \{\delta_\mu\} \cup \{\delta_\mu,\delta_\sigma\} & &= \{\delta_\mu,\delta_\sigma\} \\
+    \sigma_4 &=  \{\delta_\mu,\delta_\sigma\} & &= \{\delta_\mu,\delta_\sigma\} \\
+\end{align*}
+
+%Contract state transitions are triggered by external events $e \in \mathcal{E}$ or messages $m \in \mathcal{M}$. Transitions between two states $\mu, \mu' \in M$ are denoted $\mu \rightarrow \mu '$. If the transition is due to an external event $e$ we write $\mu \xrightarrow{e} \mu '$. If the transition is due to a message $m$ we write $\mu \xrightarrow{m} \mu '$. Generic transitions are noted as $\mu \rightarrow \mu '$.
+%
+%A message $m$ can be ``applied'' to a state $\mu$, we denote this operation with $m(\mu)$, i.e. $\mu \xrightarrow{m} \mu'$. Messages are created based on a channel states. Each channel state $\sigma \in \Sigma$ can derive its corresponding message $m \in \mathcal{M}$
+%$$\forall \sigma \in \Sigma,\ \exists m\ |\ m \in \mathcal{M}$$
+%
+%In reality it is not necessary to derive all messages. Some external events (e.g. top ups) afect the channel states that trigger transitions in $\Sigma$, but correspondig messages are only created when needed.
+
+\section{Building blocks}
 \subsection{Contract state variables} We define variables to acces the contract state $\mu \in M$ for a client $c \in \mathcal{C}$.
 
-\subsubsection{Current on-chain index, $I(c)$} For each client the current index $I(c)$ must be retreivable, $\forall c \in \mathcal{C}, \quad \exists I(c) \in \mu >= 0$. The index for a client must start from $0$.
+\subsubsection{Current validity index, $I_\mu$} For each client the current index $I_\mu$ must be retreivable, $\forall c \in \mathcal{C}, \quad \exists I_\mu \in \mu >= 0$. The index for a client must start from $0$.
 
-\subsubsection{Current on-chain balance, $B_\mu(c)$} For each client the current balance amount must be retreivable, $\forall c \in \mathcal{C}, \quad \exists B_\mu(c) \in \mu >= 0$.
+\subsubsection{Current contract client balance, $B_\mu$} For each client the current contract balance amount must be retreivable, $\forall c \in \mathcal{C}, \quad \exists B_\mu \in \mu >= 0$. It is worth noting that this current contract balance is not the same as the current channel balance or, in other words, the channel remaining amount of a client.
 
-\subsubsection{Refund parameters, $R(c)$} For each client the current refund parameters must be retreivable, $\forall c \in \mathcal{C}, \quad \exists R(c) \in \mu$ such that $R(c)$ is the provider owned amount at the moment of the request. The remaing money must go to the client.
+\subsubsection{Current provider refund amount, $R_\mathcal{P}$} For each client the current provider refund amount must be retreivable, $\forall c \in \mathcal{C}, \quad \exists R_\mathcal{P} \in \mu$ such that $R_\mathcal{P}$ is the provider owned amount at the moment of the request. The remaing money must go to the client.
 
-\subsection{Contract states} Each client $c \in \mathcal{C}$ in the contract is defined by an on-chain state $\mu \in M$. States $\mu \in M$ are represented as
-$$(I(c), B_\mu(c), R(c))$$
+\subsection{Contract states} Each client $c \in \mathcal{C}$ in the contract is defined by an on-chain state $\mu_c \in M$. States $\mu \in M$ are represented as
+$$\mu_c = (I_\mu, B_\mu, R_\mathcal{P})$$
 
 \subsection{Channel state variables} We define variables to represent: (i) the lifetime of a single channel in the multi-clients channel architecture, (ii) the total amount deposited for a client over the lifetime, (iii) the total amount own by the provider over the lifetime, and (iv) the minimal and full available amount for the client.
 
-\subsubsection{Channel lifetime, $L(c \rightarrow \mathcal{P})$} It exists one lifetime and only one per element in $\mathcal{C} \times \mathcal{P}$ and begins when the first deposit is made, i.e. one lifetime per client $c \in \mathcal{C}$.
+\subsubsection{Channel lifetime} It exists one lifetime and only one per element in $\mathcal{C} \times \mathcal{P}$ and begins when the first deposit is made, i.e. one lifetime per client $c \in \mathcal{C}$.
 
-\subsubsection{Total deposit, $D(c)$} Total deposit of a client $c$ represents the total amount recieved from the begining of the lifetime. Each top up increases the total deposit.
+\subsubsection{Last observed validity index, $I_\sigma$} The last observed validity index is a copy of contract validity index at the moment where the state is created.
 
-\subsubsection{Total spent, $\sum c \rightarrow \mathcal{P}$} Total amount sent to the provider by a client $c$ represents the sum of all payments since the begining of the lifetime. Each payment increases the total sent.
+\subsubsection{Last observed client balance, $B_\sigma$} Same as the validity index but the client balance.
 
-\subsubsection{Client refunded amount, $R_\sigma(c)$} Total amount refunded to the client $c$ since the begining of the lifetime. Each refund increases the total client refunded amount.
+\subsubsection{Total deposit, $D$} Total deposit of a client represents the total amount recieved from the begining of the lifetime. Each top up increases the total deposit.
 
-\subsubsection{Minimal available amount, $A_m(c)$} Minimal amount available for a client $c$ is computed with the latest channel state $\sigma$. Without quering the contract state $\mu$ it is impossible to know if a bigger amount is now available. The minimal available amount is computed with
-$$A_m(c) = D(c) - \textstyle \sum c \rightarrow \mathcal{P}$$
+\subsubsection{Total spent, $S$} Total amount sent to the provider by a client represents the sum of all payments since the begining of the lifetime. Each payment increases the total spent.
 
-\subsubsection{Client available amount, $A(c)$} The full amount available into a single channel for a client $c \in \mathcal{C}$ is computed with
-$$A(c) = D(c) - \textstyle \sum c \rightarrow \mathcal{P} + (B_\mu(c) - B_\sigma(c)), \quad B_\mu(c) \geq A(c)$$
+\subsubsection{Client refunded amount, $R$} Total amount refunded to the client since the begining of the lifetime. Each refund can increase the total client refunded amount.
 
-It is worth noting that $B_\mu(c) - B_\sigma(c)$ is added to the difference of total deposit and total sent in case of on-chain changements, like top up.
+\subsubsection{Minimal available amount, $A_m$} Minimal amount available for a client is computed with the latest channel state $\sigma$. Without quering the contract state $\mu$ it is impossible to know if a bigger amount is now available. The minimal available amount is computed with
+$$A_m = D - S - R$$
+
+\subsubsection{Client available amount, $A$} The full amount available into a single channel for a client is computed with
+$$A = D - S - R + B_\mu - B_\sigma, \quad B_\mu \geq A$$
+
+It is worth noting that $B_\mu - B_\sigma$ is added to the difference of total deposit and total spent in case of new on-chain delta changes.
 
 \subsection{Channel states} Each client $c \in \mathcal{C}$ is defined by their channel state $\sigma \in \Sigma$. States $\sigma \in \Sigma$ are composed of: (i) a validity index, (ii) the latest observed on-chain balance
-of the client, (iii) the total deposit of the client, (iv) the total owned by the provider, and (v) the client total refunded amount. We denote a state $\sigma \in \Sigma$ as
-$$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P},R_\sigma(c))$$
+of the client, (iii) the total deposit of the client, (iv) the total owned by the provider, and (v) the client total refunded amount. We denote a state $\sigma_c \in \Sigma$ as
+$$\sigma_c = (I_\sigma, B_\sigma, D, S,R)$$
 
-\subsection{Messages} Messages $m \in \mathcal{M}$ are simplifications of channel states that allow exchanges between clients $\mathcal{C}$ and provider $\mathcal{P}$. A message is related to one and only one element in $\mathcal{C} \times \mathcal{P}$ for only one $\sigma \in \Sigma$.
+\subsection{Modifying channel states and contract states with Deltas} Deltas $\delta \in \Delta$ represent external channel capabilities of changing states $\Sigma$ and contract states $M$. Along with directives, they encapsulate all the channel capabilities. In this proposed channel architecture capabilities are: send money through the channel from clients to provider, create and top up a channel, settle a channel, and ask and get a refund. In that list, external capabilities are sending money through the channel, creating a channel, and top up a channel.
 
-\subsubsection{Minimal message} A minimal message $m \in \mathcal{M}$ between a client $c$ and the provider $\mathcal{P}$ is composed of four components: (i) a validity index, (ii) the lastest observed balance, (iii) the total of deposit, and (iv) the total owned by the provider. We denote a message $m \in \mathcal{M}$ as
-$$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
+\subsubsection{Payment, $\delta_\sigma(a)$} This delta is used to increase the channel balance of the provider $O(\mathcal{P})$ of $a$ amount from a client $c$. Payment deltas are sent by clients to the provider. For each payment an acquired settle directive $d_s$ is generated by the client and sent to the provider.
+
+\subsubsection{Top up, $\delta_\mu(a)$} This delta is used to increase the contract balance of a client by $a$ amount. Top up deltas are sent by anyone for any specific channel, i.e. client.
+
+Creating channels is a special case of top up, when a channel is top up but does not already exists, the channel is created. The first delta of all channel will always be a top up.
+
+\subsection{Dictate channel state on contract layer with Messages \& Directives} We define in the previous chapter a transition in contract layer performed with a channel state noted $\mu \xrightarrow{\sigma} \mu'$ or $\sigma(\mu) = \mu'$. These transitions are performed by the intermediary of messages $m \in \mathcal{M}$ and directives $d$.
+
+Messages $m \in \mathcal{M}$ are an intermediary representation of channel states between the channel layer and contract layer. A message is related to one and only one element in $\mathcal{C} \times \mathcal{P}$ for only one $\sigma \in \Sigma$. Messages are used to derive directives. Directives are the concrete representation of a state $\sigma$ in the contract layer. The contract layer only ``speak'' and understand directives.
+
+Thus we will use the message representation in the following chapter to describe contract transitions based on channel state application.
+
+\subsubsection{Minimal message} A minimal message $m \in \mathcal{M}$ between a client $c$ and the provider $\mathcal{P}$ is composed of four components: (i) a validity index, (ii) the lastest observed balance, (iii) the ajusted total of deposit, and (iv) the total owned by the provider (total spent by the client). We denote a message $m \in \mathcal{M}$ as
+$$m = (I_m, B_\sigma, D_m, S)$$
 
 \subsubsection{Message derivation} Messages are derived from channel states $\Sigma$ as
 \begin{equation*}
 \begin{split}
     \sigma &\implies m \\
-    (i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P},R_\sigma(c)) &\implies (i+1, B_\sigma(c), D(c)-R_\sigma(c), \textstyle \sum c \rightarrow \mathcal{P}) \\
+    (I_\sigma, B_\sigma, D, S, R) &\implies (I_\sigma +1, B_\sigma, D-R, S) \\
 \end{split}
 \end{equation*}
 
-\subsection{Modifiers} Modifiers $\omega \in \Omega$ are input parameters that modify channel states $\sigma$. They are not related to any solidity principles. They encapsulate the channel capabilities. In this multi-clients payment channel the capability is sending money through the channel from clients to provider, i.e. $c \rightarrow \mathcal{P}$.
+\subsubsection{Directives} One message can derives many directives. We define two base directives: (i) one used by the provider and (ii) one used by the client. It is possible to add as many directives as needed in the contract layer. We distinguish two types of directives: (i) self-generated directives, and (ii) acquired directives. Self-generated directives can be generated without external computation and are directly valid in the contract layer. Conversely acquired directive require external computation with the other party (can be client or provider).
 
-\subsubsection{Payment, $\omega(a)$} This modifier is used to increase the balance $O(\mathcal{P})$ of the provider of $a$ amount from a client $c$.
+Settling and refunding a channel are part of dictate a channel state on the contract layer, and then are performed with directives.
+
+\subsubsection{Settle, $d_s$} Directive sent from the client to the provider to validate a payment $\delta_\sigma(a)$. The process of generating the directive can be sumarized as
+$$\forall \sigma \xrightarrow{\delta_\sigma(a)} \sigma', \exists d_s : \sigma' \implies m \implies d_s$$
+
+\subsubsection{Refund, $d_r$} Self-generated directive by the client used to ask for a refund. The process of generating the directive can be sumarized as
+$$\forall \sigma, \exists d_r : \sigma \implies m \implies d_r$$
+
+When a client ask for a refund, the provider has tree choices: (i) doing nothing, (ii) resolve the refund with a matching $d_r$, or (iii) dispute the refund with a matching $d_r$. If the provider do nothing the client can take what he asked after some delay, otherwise the provider will close the request by resolve or dispute.
 
 \section{State transitions}
 
-\subsection{Contract state, $\mu \rightarrow \mu'$} Contract states $\mu \in M$ can transition $\mu \rightarrow \mu'$ because of a message $m \in \mathcal{M}$ or external events.
+\subsection{Contract state, $\mu \rightarrow \mu'$} Contract states $\mu \in M$ can transition from $\mu$ to $\mu'$ with a message $m \in \mathcal{M}$ (i.e. directive) or contract state changes $\delta_\mu \in \Delta$.
+
+\subsubsection{Settlement} $(I_\mu, B_\mu, R_\mathcal{P}) \xrightarrow{m} (I_\mu+1, B_\mu\downarrow, R_\mathcal{P})$ where
+$$m = (I_m, B_\sigma, D_m, S)\ |\ I_m = I_\mu+1$$
+
+It is worth noting that with this rule it is not possible to settle a zero amount because the balance amount $B_\mu$ must go down. $O(\mathcal{P})$ is the amount owned by the provider at the settlement time. The provider balance is the current contract balance minus the client available funds. Computed as
+\begin{equation*}
+\begin{split}
+    O(\mathcal{P}) &= B_\mu - A \\
+    &= B_\mu - (D_m - S + B_\mu - B_\sigma) \\
+\end{split}
+\end{equation*}
+
+The new balance $B_\mu\downarrow$ is the remaing funds
+\begin{equation*}
+\begin{split}
+    B_\mu\downarrow \ &= A \\
+    &= D_m - S + B_\mu - B_\sigma \\
+\end{split}
+\end{equation*}
+
+The new client balance is the current contract balance minus the the amount due to the provider.
+
+\subsubsection{Refund} $(I_\mu, B_\mu,R_\mathcal{P}) \xrightarrow{m} (I_\mu+1, B_\mu, R_\mathcal{P}')$ where
+$$m = (I_m, B_\sigma, D_m, S)\ |\ I_m = I_\mu+1$$
+
+It is a full refund if the client available funds in the channel for the client are equal to the current contract balance and a partial refund if the available funds of the client are smaller than the balance
+\begin{equation*}
+\begin{split}
+    R_\mathcal{P}' &=
+  \begin{cases}
+      B_\mu - A & \quad \text{if } B_\mu > A \\
+      0 & \quad \text{if } B_\mu = A \\
+  \end{cases}
+\end{split}
+\end{equation*}
+
+\subsubsection{Dispute} $(I_\mu, B_\mu,R_\mathcal{P}) \xrightarrow{m} (I_\mu, 0, 0)$ where
+$$m = (I_m, B_\sigma, D_m, S)\ |\ I_m = I_\mu$$
+
+If $O(\mathcal{P}) > R_\mathcal{P}$ the provider won the dispute and $O(\mathcal{P})$ is transfer to the provider plus some penalities, the rest is sent to the client.
+
+\subsubsection{Resolve} $(I_\mu, B_\mu,R_\mathcal{P}) \xrightarrow{m} (I_\mu, 0, 0)$ where
+$$m = (I_m, B_\sigma, D_m, S)\ |\ I_m = I_\mu$$
+
+If $O(\mathcal{P}) = R_\mathcal{P}$ the provider accept the refund. $O(\mathcal{P})$ is transfer to the provider and the rest is sent to the client imediately.
+
+\subsubsection{Top up} $(I_\mu, B_\mu,R_\mathcal{P}) \xrightarrow{\delta_\mu(a)} (I_\mu, B_\mu+a,R_\mathcal{P})$. Top up increases the contract balance for a client $c \in \mathcal{C}$. Validity index $I_\mu$ must not be incremented during the top up.
+
+\subsubsection{Invalid settlement} $(I_\mu, B_\mu,R_\mathcal{P}) \rightarrow (I_\mu, B_\mu\downarrow,R_\mathcal{P})$. This transition is invalid because the balance is decreased without incrementing the validity index $I_\mu$. The current set of transactions must be invalidate after the settlement.
+
+\subsubsection{Invalid top up} $(I_\mu, B_\mu,R_\mathcal{P}) \rightarrow (I_\mu+1, B_\mu\uparrow,R_\mathcal{P})$. Increasing validity index $I_\mu$ while increasing the contract balance invalidates the set of transaction $I_\mu$. The current set of transactions must be invalidated only during a settlement.
+
+\subsubsection{Invalid validity index} $(I_\mu, B_\mu,R_\mathcal{P}) \rightarrow (I_\mu\downarrow, \_, \_)$. Decreasing the validity index $I_\mu$ is always invalid. Validity index must not be decreased.
 
 \begin{figure}[h]
 \subfloat[Valid transitions in $M$]{
     \begin{tikzpicture}
     \begin{axis}[
-        xlabel={Balance [$B_\mu(c)$]},
-        ylabel={Index [$I(c)$]},
+        xlabel={Balance [$B_\mu$]},
+        ylabel={Index [$I_\mu$]},
         xmin=0, xmax=100,
         ymin=0, ymax=5,
         xtick={0,20,40,60,80,100},
@@ -154,7 +283,7 @@ $$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
         ymajorgrids=true,
         grid style=dashed,
     ]
-     
+
     \addplot[
         color=black,
         mark=square,
@@ -171,13 +300,13 @@ $$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
         coordinates {
             (60,3)(60,4)(0,4)
         };
-     
+
     \end{axis}
     \end{tikzpicture}}
-\subfloat[$(I,B_\mu,R) \rightarrow (I+1, B_\mu\uparrow,R)$]{
+\subfloat[$(I_\mu,B_\mu,R_\mathcal{P}) \rightarrow (I_\mu+1, B_\mu\uparrow,R_\mathcal{P})$]{
     \begin{tikzpicture}
     \begin{axis}[
-        xlabel={Balance [$B_\mu(c)$]},
+        xlabel={Balance [$B_\mu$]},
         xmin=0, xmax=100,
         ymin=0, ymax=5,
         xtick={0,20,40,60,80,100},
@@ -185,7 +314,7 @@ $$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
         ymajorgrids=true,
         grid style=dashed,
     ]
-     
+
     \addplot[
         color=black,
         mark=square,
@@ -193,7 +322,7 @@ $$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
         coordinates {
             (0,0)(25,0)(0,1)(50,1)
         };
-     
+
     \addplot[
         color=red,
         mark=square,
@@ -201,14 +330,14 @@ $$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
         coordinates {
             (50,1)(70,2)
         };
-     
+
     \end{axis}
     \end{tikzpicture}}\\
-\subfloat[$(I, B_\mu,R) \rightarrow (I\downarrow,\_,R)$]{
+\subfloat[$(I_\mu, B_\mu,R_\mathcal{P}) \rightarrow (I_\mu\downarrow,\_,R_\mathcal{P})$]{
     \begin{tikzpicture}
     \begin{axis}[
-        xlabel={Balance [$B_\mu(c)$]},
-        ylabel={Index [$I(c)$]},
+        xlabel={Balance [$B_\mu$]},
+        ylabel={Index [$I_\mu$]},
         xmin=0, xmax=100,
         ymin=0, ymax=5,
         xtick={0,20,40,60,80,100},
@@ -216,7 +345,7 @@ $$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
         ymajorgrids=true,
         grid style=dashed,
     ]
-     
+
     \addplot[
         color=black,
         mark=square,
@@ -224,7 +353,7 @@ $$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
         coordinates {
             (0,0)(25,0)(0,1)(50,1)
         };
-     
+
     \addplot[
         color=red,
         mark=square,
@@ -232,13 +361,13 @@ $$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
         coordinates {
             (50,1)(50,0)
         };
-     
+
     \end{axis}
     \end{tikzpicture}}
-\subfloat[$(I,B_\mu,R) \rightarrow (I, B_\mu\downarrow,R)$]{
+\subfloat[$(I_\mu,B_\mu,R_\mathcal{P}) \rightarrow (I_\mu, B_\mu\downarrow,R_\mathcal{P})$]{
     \begin{tikzpicture}
     \begin{axis}[
-        xlabel={Balance [$B_\mu(c)$]},
+        xlabel={Balance [$B_\mu$]},
         xmin=0, xmax=100,
         ymin=0, ymax=5,
         xtick={0,20,40,60,80,100},
@@ -246,7 +375,7 @@ $$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
         ymajorgrids=true,
         grid style=dashed,
     ]
-     
+
     \addplot[
         color=black,
         mark=square,
@@ -254,7 +383,7 @@ $$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
         coordinates {
             (0,0)(25,0)(0,1)(70,1)
         };
-     
+
     \addplot[
         color=red,
         mark=square,
@@ -262,239 +391,160 @@ $$(i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P})$$
         coordinates {
             (70,1)(50,1)
         };
-     
+
     \end{axis}
     \end{tikzpicture}}
-\caption{State transitions in $M$, transitions in red are not allowed. Dashed transition are during refund process. The first step is the refund request, the second can be either claim, resolve, or dispute.}
+\caption{State transitions in $M$, transitions in red are not allowed. Dashed transition are during refund process. The first step is the refund request, the second can be either claim, resolve, or dispute. Figure (c) show validity index decrementation, this is invalid no matter of the resulting balance amount. Figure (d) shows a decreasing balance, red line owerflow the black line.}
 \label{fig:contractStateTransitions}
 \end{figure}
 
-\subsubsection{Settlement} $(I(c), B_\mu(c), R(c)) \xrightarrow{m} (I(c)+1, B_\mu(c)\downarrow, R(c))$ where
-$$m = (i, B_\sigma(c), D(c), \textstyle\sum c \rightarrow \mathcal{P})\ |\ i = I(c)+1$$
-
-It is worth noting that with this rule it is not possible to settle a zero amount because the balance amount $B_\mu(c)$ must go down!
-\begin{equation*}
-\begin{split}
-    O(\mathcal{P}) &= B_\mu(c) - A(c) \\
-    &= B_\mu(c) - (D(c) - \textstyle \sum c \rightarrow \mathcal{P} + (B_\mu(c) - B_\sigma(c))) \\
-\end{split}
-\end{equation*}
-
-$O(\mathcal{P})$ is the amount owned by the provider at the settlement time. The provider can settle the amount in the balance minus the remaining funds of the client $c$.
-\begin{equation*}
-\begin{split}
-    B_\mu(c)\downarrow \ &= B_\mu(c) - O(\mathcal{P}) \\
-    &= B_\mu(c) -(B_\mu(c) - (D(c) - \textstyle \sum c \rightarrow \mathcal{P} + (B_\mu(c) - B_\sigma(c)))) \\
-\end{split}
-\end{equation*}
-
-The new client balance is the current contract balance minus the the amount due to the provider.
-
-\subsubsection{Refund} $(I(c), B_\mu(c),R(c)) \xrightarrow{m} (I(c)+1, B_\mu(c), R(c)')$ where
-$$m = (i, B_\sigma(c), D(c), \textstyle\sum c \rightarrow \mathcal{P})\ |\ i = I(c)+1$$
-
-It is a full refund if the client available funds in the channel for the client are equal to the current contract balance and a partial refund if the available funds of the client are smaller than the balance
-\begin{equation*}
-\begin{split}
-    R(c)' &=
-  \begin{cases}
-      B_\mu(c) - A(c) & \quad \text{if } B_\mu(c) > A(c) \\
-      0 & \quad \text{if } B_\mu(c) = A(c) \\
-  \end{cases}
-\end{split}
-\end{equation*}
-
-%\begin{equation*}
-%\begin{split}
-%    B_\mu(c) &\overset{?}{=} A(c) \\
-%    &\overset{?}{=} D(c) - \textstyle \sum c \rightarrow \mathcal{P} + (B_\mu(c) - B_\sigma(c)) \\
-%\end{split}
-%\end{equation*}
-%
-%In that case 
-%$$R(c)' = (0,d)\ |\ d = \texttt{current\_block\_number} + \texttt{delay}$$
-%
-%If the client available funds in the channel are smaller than the current contract balance it is a partial refund
-%\begin{equation*}
-%\begin{split}
-%    B(c) &\overset{?}{>} A(c)
-%\end{split}
-%\end{equation*}
-%
-%In that case the provider amount is
-%\begin{equation*}
-%\begin{split}
-%    R(c)' &= (O(\mathcal{P}),d) \\
-%    d &= \texttt{current\_block\_number} + \texttt{delay} \\
-%    O(\mathcal{P}) &= B_\mu(c) - A(c)
-%\end{split}
-%\end{equation*}
-
-\subsubsection{Dispute} $(I(c), B_\mu(c),R(c)) \xrightarrow{m} (I(c), 0, 0)$ where
-$$m = (i, B_\sigma(c), D(c), \textstyle\sum c \rightarrow \mathcal{P})\ |\ i = I(c)$$
-
-If $O(\mathcal{P}) > R(c)$ the provider won the dispute and $O(\mathcal{P})$ is transfer to the provider plus some penalities, the rest is sent to the client.
-
-\subsubsection{Resolve} $(I(c), B_\mu(c),R(c)) \xrightarrow{m} (I(c), 0, 0)$ where
-$$m = (i, B_\sigma(c), D(c), \textstyle\sum c \rightarrow \mathcal{P})\ |\ i = I(c)$$
-
-If $O(\mathcal{P}) = R(c)$ the provider accept the refund. $O(\mathcal{P})$ is transfer to the provider and the rest is sent to the client imediately.
-
-\subsubsection{Top up} $(I(c), B_\mu(c),R(c)) \xrightarrow{e} (I(c), B_\mu(c)\uparrow,R(c))$. Top up increases the contract balance for a client $c \in \mathcal{C}$. Validity index $I(c)$ must not be incremented during the top up.
-
-\subsubsection{Invalid settlement} $(I(c), B_\mu(c),R(c)) \rightarrow (I(c), B_\mu(c)\downarrow,R(c))$. This transition is invalid because the balance is decreased without incrementing the validity index $I(c)$. The current set of transactions must be invalidate after the settlement.
-
-\subsubsection{Invalid top up} $(I(c), B_\mu(c),R(c)) \rightarrow (I(c)+1, B_\mu(c)\uparrow,R(c))$. Increasing validity index $I(c)$ while increasing the contract balance invalidates the set of transaction $I(c)$. The current set of transactions must be invalidate only during a settlement.
-
-\subsubsection{Invalid validity index} $(I(c), B_\mu(c),R(c)) \rightarrow (I(c)\downarrow, \_, \_)$. Decreasing the validity index $I(c)$ is always invalid. Validity index must not be decreased.
-
-\begin{table}[t]
-  \begin{tabularx}{\textwidth}{| S | S | C | C | C |}
-    \cline{2-5}
-      \multicolumn{1}{c|}{ } & $\omega$ & $\mu$ & $m$ & $\sigma$ \\ \cline{2-5}
-      \multicolumn{1}{c|}{ } & $\omega(a)$ & $(I,B_\mu,R)$ & $(i,B_\sigma,D,\sum)$ & $(i,B_\sigma,D,\sum,R_\sigma)$ \\
-  \hhline{~====}
-      \multicolumn{1}{c|}{ } & & $(0,0,0)$ & & $\emptyset$ \\ \cline{1-1}
-      top up & & $(0,10,0)$ & & $(0,10,10,0,0)$ \\
-      payment & $+1$ & & $(1, 10, 10, 1)$& $(0, 10, 10, 1, 0)$ \\
-      payment & $+1$ & & $(1, 10, 10, 2)$& $(0, 10, 10, 2, 0)$ \\
-      settle & & $(1,8,0)$ & & $(1,8,10,2,0)$ \\
-      payment & $+2$  & & $(2, 8, 10, 4)$ & $(1, 8, 10, 4, 0)$ \\
-      payment & $+2$  & & $(2, 8, 10, 6)$ & $(1, 8, 10, 6, 0)$ \\
-      top up & & $(1,18,0)$ & & $(1, 18, 20, 6, 0)$ \\
-      payment & $+1$ & & $(2, 18, 20, 7)$ & $(1, 18, 20, 7, 0)$ \\
-      settle & & $(2,13,0)$ & $(3,13,20,7)$ & $(2,13,20,7,0)$ \\
-      refund & & $(3,13,0)$ & & $(3,13,20,7,0)$ \\
-      claim & & $(3,0,0)$ & & $(3,0,20,7,13)$ \\
-      \cline{1-5}
-  \end{tabularx}
-  \medskip
-  \caption{State transitions during channel lifetime}
-\end{table}
-
-\subsection{Channel state, $\sigma \rightarrow \sigma'$} Channel state transitions $\sigma \xrightarrow{\mu + \omega} \sigma'$ for $\sigma, \sigma' \in \Sigma$, i.e. applying a modifier $\omega$ on the current state $\mu$ to result on $\sigma'$, are triggered by a modifier or transition in $M$, i.e. $\mu \rightarrow \mu'$. The contract state $\mu$ must be query on-chain. The base channel state is
+\subsection{Channel state, $\sigma \rightarrow \sigma'$} Channel state transitions ($\sigma \xrightarrow{\delta_\sigma \lor \mu \rightarrow \mu'} \sigma'$) are triggered by delta changes $\delta_\sigma \in \Delta$ or by transitions in $M$, i.e. $\mu \rightarrow \mu'$. The base channel state $\sigma$ is computed as
 \begin{equation*}
 \begin{split}
   \sigma &=
   \begin{cases}
     \emptyset & \quad \text{if no previous state exists} \\
-      (i, B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P},R_\sigma(c)) & \quad \text{otherwise}
+      (I_\sigma, B_\sigma, D, S, R) & \quad \text{otherwise}
   \end{cases}
 \end{split}
 \end{equation*}
 
-\subsubsection{Payment, $\mu(I(c), B_\mu(c), R(c))+\omega(a)$.} Payments trigger transition in channel states from a base state $\sigma$ to a destination state $\sigma'$ noted $\sigma \xrightarrow{\mu + \omega(a)} \sigma'$.
+\subsubsection{Payment, $\delta_\sigma(a)$.} Payments trigger transition in channel states from the base state $\sigma$ to a destination state $\sigma'$ noted $\sigma \xrightarrow{\delta_\sigma(a)} \sigma'$.
 The destination channel state is computed as
 \begin{equation*}
 \begin{split}
   \sigma' &=
   \begin{cases}
       \emptyset & \quad \text{if } \sigma = \emptyset \\
-      (I(c), B_\mu(c), D(c), \textstyle \sum c \rightarrow \mathcal{P}+a,R_\sigma(c)) & \quad \text{otherwise}
+      (I_\mu, B_\mu, D, S+a, R) & \quad \text{otherwise}
   \end{cases}
 \end{split}
 \end{equation*}
 
-Payments cannot be accepted without a previous state. If $\sigma = \emptyset$ then the channel is not initialized yet and must be before any payments.
+Payments cannot be accepted without a previous state. If $\sigma = \emptyset$ then the channel is not initialized yet and must not accept any payments.
 
-\subsubsection{Top up, $\mu(I(c), B_\mu(c), R(c)) \rightarrow \mu(I(c), B_\mu(c) \uparrow, R(c))$.} Each top up event modify the contract state $\mu$, then the channel state $\sigma$ must be updated to keep track of the real balance. The destination channel state is computed as \begin{equation*}
+\subsubsection{Top up, $\mu \xrightarrow{\delta_\mu(a)} \mu'$.} Each top up event modify the contract state $\mu$, then the channel state $\sigma$ must be updated to keep track of the real balance. The destination channel state is computed as \begin{equation*}
 \begin{split}
   \sigma' &=
   \begin{cases}
-      (0, B_\mu(c), B_\mu(c), 0, 0) & \quad \text{if } \sigma = \emptyset \\
-      (I(c), B_\mu(c), D(c) + (B_\mu(c) - B_\sigma(c)), \textstyle \sum c \rightarrow \mathcal{P},R_\sigma(c)) & \quad \text{otherwise}
+      (0, B_\mu, B_\mu, 0, 0) & \quad \text{if } \sigma = \emptyset \\
+      (I_\sigma, B_\mu, D + B_\mu - B_\sigma, S, R) & \quad \text{otherwise}
   \end{cases}
 \end{split}
 \end{equation*}
+
+where
+$$B_\mu - B_\sigma = a$$
 
 It is worth noting that if no previous state exists the channel is initialized and the first state is created.
 
-\subsubsection{Settle, $\mu(I(c), B_\mu(c), R(c)) \rightarrow \mu(I(c), B_\mu(c) \downarrow, R(c))$.} Settlements trigger transition in contract state $\mu \rightarrow \mu'$ and then the channel state $\sigma$ must be updated as 
+\subsubsection{Settle, $\mu \xrightarrow{\sigma''} \mu'$.} Settlements trigger transition in contract state $\mu \rightarrow \mu'$ and then the channel state $\sigma$ must be updated as
 \begin{equation*}
 \begin{split}
   \sigma' &=
   \begin{cases}
       \emptyset & \quad \text{if } \sigma = \emptyset \\
-      (I(c), B_\mu(c), D(c), \textstyle \sum c \rightarrow \mathcal{P},R_\sigma(c)) & \quad \text{otherwise}
+      (I_\mu, B_\mu, D, S, R) & \quad \text{otherwise}
   \end{cases}
 \end{split}
 \end{equation*}
 
-\subsubsection{Refund, $\mu(I(c), B_\mu(c), R(c)) \rightarrow \mu(I(c)+1, B_\mu(c), R(c)')\ |\ R(c)' \geq 0$.} Clients can ask for refund and modify the contract state then the channel state must be updated as
+\subsubsection{Refund, $\mu \xrightarrow{\sigma''} \mu'\ |\ R_\mathcal{P} \geq 0$.} Clients can ask for refund and modify the contract state then the channel state must be updated as
 \begin{equation*}
 \begin{split}
   \sigma' &=
   \begin{cases}
       \emptyset & \quad \text{if } \sigma = \emptyset \\
-      (I(c), B_\sigma(c), D(c), \textstyle \sum c \rightarrow \mathcal{P}, R_\sigma(c)) & \quad \text{otherwise}
+      (I_\mu, B_\sigma, D, S, R) & \quad \text{otherwise}
   \end{cases}
 \end{split}
 \end{equation*}
 
-and the state of the channel must enter is ``refund mode'' until the refund is ended with either a dispute, resolve, or a claim. During this periode client must not send new payments to prevent the provider to successfully dispute the refund (even if updating the channel state to $i = I(c)+1$ normlay prevent negociating payment for $i = I(c)$.)
+and the state of the channel must enter is ``refund mode'' until the refund is ended with either a dispute, resolve, or a claim. During this periode client must not send new payments to prevent the provider to successfully dispute the refund (even if updating the channel state to $I_\sigma = I_\mu$ normlay prevent negociating payment for $I_m = I_\mu$).
 
-\subsubsection{Dispute, $\mu(I(c), B_\mu(c), R(c)) \rightarrow \mu(I(c), 0, 0)$.} When request refunds are resolved with a dispute the provider can take what he owns during the dispute plus some penalties $\mathcal{E}$. 
+\subsubsection{Dispute, $\mu \xrightarrow{\sigma''} \mu'$.} When request refunds are resolved with a dispute the provider can take what he owns during the dispute plus some penalties $\rho$.
 
 \begin{equation*}
 \begin{split}
   \sigma' &=
   \begin{cases}
       \emptyset & \quad \text{if } \sigma = \emptyset \\
-      (I(c), 0, D(c), \textstyle \sum c \rightarrow \mathcal{P} + \mathcal{E},B_\mu(c) - R(c) - \mathcal{E}) & \quad \text{otherwise}
-  \end{cases}
-\end{split}
-\end{equation*}
-
-such that
-\begin{equation*}
-\begin{split}
-    D(c) &= \textstyle\sum c \rightarrow \mathcal{P} + R_\sigma(c)
-\end{split}
-\end{equation*}
-
-\subsubsection{Resolve \& Claim, $\mu(I(c), B_\mu(c), R(c)) \rightarrow \mu(I(c), 0, 0)$.} Provider can resolve a refund request by submitting the settle directive $d_s$ and then accept the request or, a client can claim his funds after the delay. In both cases the contract state $\mu$ changes, then the channel state must be updated as
-\begin{equation*}
-\begin{split}
-  \sigma' &=
-  \begin{cases}
-      \emptyset & \quad \text{if } \sigma = \emptyset \\
-      (I(c), 0, D(c), \textstyle \sum c \rightarrow \mathcal{P},B_\mu(c) - R(c)) & \quad \text{otherwise}
+      (I_\sigma, B_\mu, D, S + \rho, B_\mu - R_\mathcal{P} - \rho) & \quad \text{otherwise}
   \end{cases}
 \end{split}
 \end{equation*}
 
 such that
+$$D = S + R \land B_\mu = 0$$
+
+\subsubsection{Resolve \& Claim, $\mu \xrightarrow{\sigma''} \mu'$.} Provider can accept the request and resolve a refund request by submitting the settle directive $d_s$ or a client can claim his funds after the delay. In both cases the contract state $\mu$ changes, then the channel state must be updated as
 \begin{equation*}
 \begin{split}
-    D(c) &= \textstyle\sum c \rightarrow \mathcal{P} + R_\sigma(c)
+  \sigma' &=
+  \begin{cases}
+      \emptyset & \quad \text{if } \sigma = \emptyset \\
+      (I_\sigma, B_\mu, D, S, B_\mu - R_\mathcal{P}) & \quad \text{otherwise}
+  \end{cases}
 \end{split}
 \end{equation*}
+
+such that
+$$D = S + R \land B_\mu = 0$$
 
 \begin{table}[t]
   \begin{tabularx}{\textwidth}{| S | S | C | C | C |}
     \cline{2-5}
-      \multicolumn{1}{c|}{ } & $\omega$ & $\mu$ & $m$ & $\sigma$ \\ \cline{2-5}
-      \multicolumn{1}{c|}{ } & $\omega(a)$ & $(I,B_\mu,R)$ & $(i,B_\sigma,D,\sum)$ & $(i,B_\sigma,D,\sum,R_\sigma)$ \\
+      \multicolumn{1}{c|}{ } & $\delta$ & $\mu$ & $m$ & $\sigma$ \\ \cline{2-5}
+      \multicolumn{1}{c|}{ } & $\delta(a)$ & $(I_\mu,B_\mu,R_\mathcal{P})$ & $(I_m,B_\sigma,D_m,S)$ & $(I_\sigma,B_\sigma,D,S,R)$ \\
   \hhline{~====}
       \multicolumn{1}{c|}{ } & & $(0,0,0)$ & & $\emptyset$ \\ \cline{1-1}
-      top up & & $(0,3,0)$ & & $(0,3,3,0,0)$ \\
-      top up & & $(0,5,0)$ & & $(0, 5, 5, 0,0)$ \\
-      payment & $+3$ & & $(1, 5, 5, 3)$ & $(0, 5, 5, 3,0)$ \\
-      settle & & $(1,2,0)$ & & $(1,2,5,3,0)$ \\
-      payment & $+1$ & & $(2, 2, 5, 4)$ & $(1, 2, 5, 4,0)$ \\
-      top up & & $(1,4,0)$ & & $(1, 4, 7, 4,0)$ \\
-      settle & & $(2,3,0)$ & & $(2,3,7,4,0)$ \\
-      payment & $+2$ & & $(3, 3, 7, 6)$ & $(2, 3, 7, 6,0)$ \\
-      refund & & $(3,3,2)$ & & $(3, 3, 7, 6,0)$ \\
-      top up & & $(3,13,2)$ & & $(3, 13, 17, 6,0)$ \\
-      resolve & & $(3,0,0)$ & & $(3,0,17,6,11)$ \\
+      top up  & $\delta_\mu(10)$   & $(0,10,0)$ &               & $(0,10,10,0,0)$ \\
+      payment & $\delta_\sigma(1)$ &            & $(1,10,10,1)$ & $(0,10,10,1,0)$ \\
+      payment & $\delta_\sigma(1)$ &            & $(1,10,10,2)$ & $(0,10,10,2,0)$ \\
+      settle  &                    & $(1,8,0)$  &               & $(1,8,10,2,0)$ \\
+      payment & $\delta_\sigma(2)$ &            & $(2,8,10,4)$  & $(1,8,10,4,0)$ \\
+      payment & $\delta_\sigma(2)$ &            & $(2,8,10,6)$  & $(1,8,10,6,0)$ \\
+      top up  & $\delta_\mu(10)$   & $(1,18,0)$ &               & $(1,18,20,6,0)$ \\
+      payment & $\delta_\sigma(1)$ &            & $(2,18,20,7)$ & $(1,18,20,7,0)$ \\
+      settle  &                    & $(2,13,0)$ & $(3,13,20,7)$ & $(2,13,20,7,0)$ \\
+      refund  &                    & $(3,13,0)$ &               & $(3,13,20,7,0)$ \\
+      claim   &                    & $(3,0,0)$  &               & $(3,0,20,7,13)$ \\
+      \cline{1-5}
+  \end{tabularx}
+  \medskip
+  \caption{State transitions during channel lifetime}
+\end{table}
+
+\begin{table}[t]
+  \begin{tabularx}{\textwidth}{| S | S | C | C | C |}
+    \cline{2-5}
+      \multicolumn{1}{c|}{ } & $\delta$ & $\mu$ & $m$ & $\sigma$ \\ \cline{2-5}
+      \multicolumn{1}{c|}{ } & $\delta(a)$ & $(I_\mu,B_\mu,R_\mathcal{P})$ & $(I_m,B_\sigma,D_m,S)$ & $(I_\sigma,B_\sigma,D,S,R)$ \\
+  \hhline{~====}
+      \multicolumn{1}{c|}{ } & & $(0,0,0)$ & & $\emptyset$ \\ \cline{1-1}
+      top up  & $\delta_\mu(3)$    & $(0,3,0)$  &                & $(0,3,3,0,0)$ \\
+      top up  & $\delta_\mu(2)$    & $(0,5,0)$  &                & $(0,5,5,0,0)$ \\
+      payment & $\delta_\sigma(3)$ &            & $(1,5,5,3)$    & $(0,5,5,3,0)$ \\
+      settle  &                    & $(1,2,0)$  &                & $(1,2,5,3,0)$ \\
+      payment & $\delta_\sigma(1)$ &            & $(2,2,5,4)$    & $(1,2,5,4,0)$ \\
+      top up  & $\delta_\mu(2)$    & $(1,4,0)$  &                & $(1,4,7,4,0)$ \\
+      settle  &                    & $(2,3,0)$  &                & $(2,3,7,4,0)$ \\
+      payment & $\delta_\sigma(2)$ &            & $(3,3,7,6)$    & $(2,3,7,6,0)$ \\
+      refund  &                    & $(3,3,2)$  &                & $(3,3,7,6,0)$ \\
+      top up  & $\delta_\mu(10)$   & $(3,13,2)$ &                & $(3,13,17,6,0)$ \\
+      resolve &                    & $(3,0,0)$  &                & $(3,0,17,6,11)$ \\
+      top up  & $\delta_\mu(15)$   & $(3,15,0)$ &                & $(3,15,32,6,11)$ \\
+      payment & $\delta_\sigma(7)$ &            & $(4,15,21,13)$ & $(3,15,32,13,11)$ \\
+      payment & $\delta_\sigma(5)$ &            & $(4,15,21,18)$ & $(3,15,32,18,11)$ \\
+      top up  & $\delta_\mu(3)$    & $(3,18,0)$ &                & $(3,15,35,18,11)$ \\
+      settle  &                    & $(4,6,0)$  &                & $(4,6,35,18,11)$ \\
       \cline{1-5}
   \end{tabularx}
   \medskip
   \caption{Settlement after top up and refund resolved}
 \end{table}
 
-\section{Protocol} The protocol describes interactions between clients and the provider and messages negociation. Protocol introduce a new component in the channel architecture, directives. Directives are the concrete implementation of messages and are distributed between client and provider.
+\section{Protocol} The protocol describes interactions between clients and the provider and messages negociation. Protocol define the derivation of directives from messages.
 
 \subsubsection{Client actions} A client can send money through the channel and refund his money after some time if he submited the right message $m$ corresponding to the lastest channel state $\sigma$.
 
@@ -502,23 +552,31 @@ such that
 
 \subsubsection{Anyone actions} Anyone can top up a channel for himself or for another client.
 
-\subsection{Payment, $c \rightarrow \mathcal{P}$} Payment messages $m \in \mathcal{M}$ are composed of one directive for the provider signed by the client.
+\subsection{Payment, $\delta_\sigma(a)$} Payment are negociated with of one acquire directive for the provider signed by the client.
 
-\subsubsection{Settle directive, $d_s$} Settle directive $d_s$ allow the provider to claim imediately, i.e. without any delay, his owned amount for a specific channel.
+\subsubsection{Settle directive, $d_s$} Settle directive $d_s$ allow the provider to claim imediately, i.e. without any delay, his owned amount for a specific channel. The client must not be able to applied a settle directive on behalf of the provider.
 \begin{equation*}
 \begin{split}
-    h &= \texttt{keccak256}(\texttt{contract},c,I(c),B_\sigma(c),D(c),\textstyle\Sigma c \rightarrow \mathcal{P}) \\
+    h &= \texttt{keccak256}(\texttt{contract},c,I_m,B_\sigma,D_m,S) \\
     d_r &= \texttt{sign}(\texttt{prefix}, h) \quad \text{with $c$ private key} \\
 \end{split}
 \end{equation*}
 
-\subsection{Refund} Refund messages $m \in \mathcal{M}$ are composed of one directive generated by the client and signed by the client. The provider must not be able to create directives $d_r$.
+\subsection{Refund} Opening a refund is performed with one directive self-generated by the client and signed by himself. The provider must not be able to create directives $d_r$ nor applied a refund directive on behalf of the client.
 
-\subsubsection{Refund directive, $d_r$} Refund directive $d_r$ allow the client to claim all the remaing funds $A(c \rightarrow \mathcal{P})$ and transfer them after some delay if the provider is not able to dispute the claim. The provider is not able to dispute the claim if the directive come from the message generated by the latest channel state in $\Sigma$.
+\subsubsection{Refund directive, $d_r$} Refund directive $d_r$ allow the client to claim all the remaing funds and transfer them after some delay if the provider is not able to dispute the claim nor did not resolve the request. The provider is not able to dispute the claim if the directive is generated from the message derived by the latest channel state in $\Sigma$.
 \begin{equation*}
 \begin{split}
-    h &= \texttt{keccak256}(\texttt{contract},c,I(c),O(\mathcal{P})) \\
+    h &= \texttt{keccak256}(\texttt{contract},c,I_m,O(\mathcal{P})) \\
     d_r &= \texttt{sign}(\texttt{prefix}, h) \quad \text{with $c$ private key} \\
+\end{split}
+\end{equation*}
+
+with
+\begin{equation*}
+\begin{split}
+    O(\mathcal{P}) &= B_\mu - A \\
+    &= B_\mu - (D_m - S + (B_\mu - B_\sigma)) \\
 \end{split}
 \end{equation*}
 
@@ -534,154 +592,22 @@ A refund request can be closed in tree different maners
 \end{split}
 \end{equation*}
 
-\subsection{Dispute refund} Disputes are won if the provider can prove that is owns a payment directive $d_s$ where
+\subsection{Dispute refund} Disputes are won if the provider can prove that is owns a payment directive $d_s$, i.e. client agreed on a later channel state $\sigma'$, where
 $$O(\mathcal{P})' > O(\mathcal{P}), \quad O(\mathcal{P})' \in d_s \land O(\mathcal{P}) \in d_r$$
 
 with
 \begin{equation*}
 \begin{split}
-    O(\mathcal{P})' &= B_\mu(c) - A(c) \\
-    &= B_\mu(c) - (D(c) - \textstyle \sum c \rightarrow \mathcal{P} + (B_\mu(c) - B_\sigma(c))) \\
+    O(\mathcal{P})' &= B_\mu - A \\
+    &= B_\mu - (D_m - S + (B_\mu - B_\sigma)) \\
 \end{split}
 \end{equation*}
 
-\subsection{Resolve refund} Provider can choose to agree with the request and resolve it directly. By resolving the request the provider will get his remaing funds and send the client available funds $A(c)$ directly to the client. It is worth noting that the provider has no incentive to resolve request where $\sum c \rightarrow \mathcal{P} = 0$.
+\subsection{Resolve refund} Provider can choose to agree with the request and resolve it directly. By resolving the request the provider will get his remaing funds and send the client available funds $A$ directly to the client. It is worth noting that the provider has no incentive to resolve request where $S = 0$.
 
 \subsection{Claim refund} The client can claim his funds after the delay if the provider has not disputed nor resolved the request.
 
 %\section{Acknowledgement} Loan Ventura, Thomas Roulin and Nicolas Huguenin are acknowledged for their helpful contribution and comments during the completion of this work.
-
-%\begin{figure}[h]\centering
-%    \begin{tikzpicture}
-%    \begin{axis}[
-%        xlabel={Balance [$B_\mu(c)$]},
-%        ylabel={Index [$I(c)$]},
-%        xmin=0, xmax=100,
-%        ymin=0, ymax=5,
-%        xtick={0,20,40,60,80,100},
-%        ytick={0,1,2,3,4},
-%        ymajorgrids=true,
-%        grid style=dashed,
-%    ]
-%     
-%    \addplot[
-%        color=black,
-%        mark=square,
-%        ]
-%        coordinates {
-%            (0,0)(25,0)(0,1)(70,1)
-%        };
-%     
-%    \addplot[
-%        color=red,
-%        mark=square,
-%        ]
-%        coordinates {
-%            (70,1)(50,1)
-%        };
-%     
-%    \end{axis}
-%    \end{tikzpicture}
-%    \caption{Invalid transition in states $M$ with $(I(c), B_\mu(c)) \rightarrow (I(c), B_\mu(c)\downarrow)$}
-%    \label{fig:invalidSettlement}
-%\end{figure}
-%
-%\begin{figure}[h]\centering
-%    \begin{tikzpicture}
-%    \begin{axis}[
-%        xlabel={Balance [$B_\mu(c)$]},
-%        ylabel={Index [$I(c)$]},
-%        xmin=0, xmax=100,
-%        ymin=0, ymax=5,
-%        xtick={0,20,40,60,80,100},
-%        ytick={0,1,2,3,4},
-%        ymajorgrids=true,
-%        grid style=dashed,
-%    ]
-%     
-%    \addplot[
-%        color=black,
-%        mark=square,
-%        ]
-%        coordinates {
-%            (0,0)(25,0)(0,1)(50,1)
-%        };
-%     
-%    \addplot[
-%        color=red,
-%        mark=square,
-%        ]
-%        coordinates {
-%            (50,1)(70,2)
-%        };
-%     
-%    \end{axis}
-%    \end{tikzpicture}
-%    \caption{Invalid transition in states $M$ with $(I(c), B_\mu(c)) \rightarrow (I(c)+1, B_\mu(c)\uparrow)$}
-%    \label{fig:invalidTopUp}
-%\end{figure}
-%
-%\begin{figure}[h]\centering
-%    \begin{tikzpicture}
-%    \begin{axis}[
-%        xlabel={Balance [$B_\mu(c)$]},
-%        ylabel={Index [$I(c)$]},
-%        xmin=0, xmax=100,
-%        ymin=0, ymax=5,
-%        xtick={0,20,40,60,80,100},
-%        ytick={0,1,2,3,4},
-%        ymajorgrids=true,
-%        grid style=dashed,
-%    ]
-%     
-%    \addplot[
-%        color=black,
-%        mark=square,
-%        ]
-%        coordinates {
-%            (0,0)(25,0)(0,1)(50,1)
-%        };
-%     
-%    \addplot[
-%        color=red,
-%        mark=square,
-%        ]
-%        coordinates {
-%            (50,1)(50,0)
-%        };
-%     
-%    \end{axis}
-%    \end{tikzpicture}
-%    \caption{Invalid transition in states$M$ with $(I(c), B_\mu(c)) \rightarrow (I(c)\downarrow, \_)$}
-%    \label{fig:invalidValidityIndex}
-%\end{figure}
-%
-%\begin{figure}[h]\centering
-%    \begin{tikzpicture}
-%    \begin{axis}[
-%        xlabel={Balance [$B_\mu(c)$]},
-%        ylabel={Index [$I(c)$]},
-%        xmin=0, xmax=100,
-%        ymin=0, ymax=5,
-%        xtick={0,20,40,60,80,100},
-%        ytick={0,1,2,3,4},
-%        ymajorgrids=true,
-%        grid style=dashed,
-%    ]
-%     
-%    \addplot[
-%        color=black,
-%        mark=square,
-%        ]
-%        coordinates {
-%            (0,0)(25,0)(0,1)(70,1)(50,2)(10,3)(60,3)(0,4)
-%        };
-%     
-%    \end{axis}
-%    \end{tikzpicture}
-%    \caption{Valid transitions in states $M$}
-%    \label{fig:validTransitions}
-%\end{figure}
 
 %
 % ---- Bibliography ----
