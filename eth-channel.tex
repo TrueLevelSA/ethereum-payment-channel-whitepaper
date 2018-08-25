@@ -77,6 +77,8 @@ document are to be interpreted as described in RFC 2119 \cite{Bradner1997}.
 
 A payment channel is by definition a structure composed of two layers of states. The first layer of states is registered to the blockchain, i.e. ``on-chain'' or contract states $\mu \in M$, and the second layer of states is kept ``off-chain'' between the participants and the provider, i.e. channel states $\sigma \in \Sigma$. States are sets of deltas. A delta represent an atomic change in a state. Delta changes $\delta \in \Delta$ are used to transition from one state to another.
 
+We denote a main channel $\omega \in \Omega$ and sub-channels $\omega_{\alpha - \beta} \in \Omega$. The main channel is composed by the two layers previously defined as $\omega = (\Sigma, M)$.
+
 Each client have a pair of states $(\mu_c, \sigma_c)$ shared with the provider. Only the latest pair is relevent, for each transition the new state in $\Sigma$ or $M$ is kept. We denote $\mu_c$ and $\sigma_c$ the contract and channel states for a client $c \in \mathcal{C}$. Hereinafter it is implied that all $\mu, \sigma$ correspond to one specific and only one client at the same time, but we forget $c$ to simplifie the notation.
 
 Transition from a state to another state are denoted with $\rightarrow$, e.g. $\sigma \rightarrow \sigma'$ or $\mu \rightarrow \mu'$. Transitions in $\Sigma$ depends on particular deltas in $\Delta_\sigma$ noted $\delta_\sigma$. We denote a transition from $\sigma, \sigma' \in \Sigma$ that depends on $\delta_\sigma \in \Delta_\sigma$ as
@@ -88,32 +90,36 @@ $$\mu \xrightarrow{\delta_\mu} \mu'$$
 Transitivity law is applied on transitions. If it exists a transition from a state $s$ to another state $s'$ that depends on $t$ and $s'$ to $s''$ depending on $t'$, then it exists a transition from $s$ to $s''$ as
 $$s \xrightarrow{t} s' \land s' \xrightarrow{t'} s'' \implies s \xrightarrow{t + t'} s''$$
 
-Layers are linked tougether, changes in contract layer affect the channel layer and the channel layer can be dictated, or applied, on the contract layer. The full transition rule for contract states is define as
-$$\mu \xrightarrow{\delta_\mu \lor \sigma} \mu'$$
+We define predecessor and successor in states $\Sigma$ and $M$. If state $s$ is a predecessor of $s'$ we denote them as $s \prec s'$, or $s'$ is a successor of $s$ as $s' \succ s$. We denote the latest transition of a certain type as $\lceil \xrightarrow{t} \rceil$.
+
+Layers are linked tougether, changes in contract layer affect the channel layer and the channel layer can be dictated, or applied, on the contract layer. We denote the application of $\sigma$ on $\mu$, i.e. dictate a channel state on the contract layer, also as $\sigma(\mu) = \mu'$. The full transition rule for contract states is define as
+$$\mu \xrightarrow{\delta_\mu \lor \sigma(\mu)} \mu'$$
 
 and the full transition rule for channel states as
 $$\sigma \xrightarrow{\delta_\sigma \lor \mu \rightarrow \mu'} \sigma'$$
 
-We can notice that each transition in contract states $M$ are also applied in channel states $\Sigma$. We denote the application of $\sigma$ on $\mu$, i.e. dictate a channel state on the contract layer, also as $\sigma(\mu) = \mu'$.
-
-States are represented as sets of deltas $\delta \in \Delta$ and transitions are bounded to conditions. We define how to compute the resulted state.
+We can notice that each transition in contract states $M$ trigger a transition in channel states $\Sigma$. States are represented as sets of deltas $\delta \in \Delta$. We define how to compute the resulted state.
 \begin{equation*}
 \begin{split}
     \mu \xrightarrow{\delta_\mu} \mu' &: \quad \mu' = \mu \cup \{\delta_\mu\} \\
-    \mu \xrightarrow{\sigma} \mu' &: \quad \mu' = \mu \cup \sigma \\
+    \mu \xrightarrow{\sigma(\mu)} \mu' &: \quad \mu' = \mu \cup \sigma \\
     \sigma \xrightarrow{\delta_\sigma} \sigma' &: \quad \sigma' = \sigma \cup \{ \delta_\sigma \}  \\
     \sigma \xrightarrow{\mu \xrightarrow{\delta_\mu} \mu'} \sigma' &: \quad \sigma' =  \sigma \cup \mu' \lor \sigma \cup \{ \delta_\mu \} \\
-    \sigma \xrightarrow{\mu \xrightarrow{\sigma''} \mu'} \sigma' &: \quad \sigma' = \mu' \\
+    \sigma \xrightarrow{\mu \xrightarrow{\sigma''(\mu)} \mu'} \sigma' &: \quad \sigma' = \mu' \\
 \end{split}
 \end{equation*}
 
-It is worth noting that the last rule $\sigma \xrightarrow{\mu \xrightarrow{\sigma''} \mu'} \sigma'$ has implication on the validity of deltas. Because the resulting channel state $\sigma'$ is equal to the contract state $\mu'$, all deltas $\delta_\sigma$ applied between the dictated state $\sigma''$ and the starting state $\sigma$, where $\sigma'' \preceq \sigma$, are discarded. If we have
+It is worth noting that the last rule $\sigma \xrightarrow{\mu \xrightarrow{\sigma''(\mu)} \mu'} \sigma'$ has implication on the validity of deltas. Because the resulting channel state $\sigma'$ is equal to the contract state $\mu'$, all deltas $\delta_\sigma$ applied between the dictated state $\sigma''$ and the starting state $\sigma$, where $\sigma'' \preceq \sigma$, are discarded. If we have
 \begin{equation*}
 \begin{split}
-    &\emptyset \xrightarrow{\emptyset \xrightarrow{\delta_\mu} \mu_1} \sigma_1 \xrightarrow{\delta_\sigma} \sigma_2 \xrightarrow{\delta_\sigma'} \sigma_3 \xrightarrow{\mu_1 \xrightarrow{\sigma_2} \mu_2} \sigma_4\\
-    &\emptyset \xrightarrow{\delta_\mu} \mu_1 \xrightarrow{\sigma_2} \mu_2 \\
+    \Sigma&: \emptyset \xrightarrow{\emptyset \xrightarrow{\delta_\mu} \mu_1} \sigma_1 \xrightarrow{\delta_\sigma} \sigma_2 \xrightarrow{\delta_\sigma'} \sigma_3 \xrightarrow{\mu_1 \xrightarrow{\sigma_2(\mu_1)} \mu_2} \sigma_4\\
+    M&: \emptyset \xrightarrow{\delta_\mu} \mu_1 \xrightarrow{\sigma_2(\mu_1)} \mu_2 \\
 \end{split}
 \end{equation*}
+
+with application validity of a channel state $\sigma$ on a contract state $\mu$ ruled by
+$$\sigma(\mu) \iff \sigma \succ \sigma'' : \sigma' \lceil \xrightarrow{\mu \xrightarrow{\sigma'''} \mu'} \rceil \sigma''$$
+
 %\begin{equation*}
 %\begin{align*}
 %    &\emptyset &\xrightarrow{\emptyset \xrightarrow{\delta_\mu} \mu_1}& &\sigma_1 &\xrightarrow{\delta_\sigma}& &\sigma_2 &\xrightarrow{\delta_\sigma'}& &\sigma_3 &\xrightarrow{\mu_1 \xrightarrow{\sigma_2} \mu_2}& &\sigma_4\\
@@ -121,7 +127,7 @@ It is worth noting that the last rule $\sigma \xrightarrow{\mu \xrightarrow{\sig
 %\end{align*}
 %\end{equation*}
 
-We see that all channel states based on $\sigma_4$ will never contain $\delta_\sigma'$ becase the dictated channel state used is $\sigma_2$ and not $\sigma_3$.
+We see that all channel states based on $\sigma_4$ will never contain $\delta_\sigma'$ becase the dictated channel state used is $\sigma_2$ and not $\sigma_3$, then as soon as $\sigma_2$ has been applied $\sigma_3$ became invalid by the given rule.
 \begin{align*}
     \mu_1    &= \emptyset \cup \{\delta_\mu\} & &= \{\delta_\mu\} \\
     \sigma_1 &= \emptyset \cup \{\delta_\mu\} & &= \{\delta_\mu\} \\
