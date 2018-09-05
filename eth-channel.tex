@@ -77,7 +77,7 @@ document are to be interpreted as described in RFC 2119 \cite{Bradner1997}.
 
 A payment channel is by definition a structure composed of two layers of states. The first layer of states is registered to the blockchain, i.e. ``on-chain'' or contract states $\mu \in M$, and the second layer of states is kept ``off-chain'' between the participants and the provider, i.e. channel states $\sigma \in \Sigma$. States are sets of deltas. A delta represent an atomic change in a state. Delta changes $\delta \in \Delta$ are used to transition from one state to another.
 
-We denote a main channel $\omega \in \Omega$ and sub-channels $\omega_{\alpha - \beta} \in \Omega$. The main channel is composed by the two layers previously defined as $\omega = (\Sigma, M)$.
+We denote a main channel $\omega \in \Omega$ and assume the existance of sub-channels. The main channel $\omega$ is composed of two layers previously defined $(\Sigma, M)$.
 
 Each client have a pair of states $(\mu_c, \sigma_c)$ shared with the provider. Only the latest pair is relevent, for each transition the new state in $\Sigma$ or $M$ is kept. We denote $\mu_c$ and $\sigma_c$ the contract and channel states for a client $c \in \mathcal{C}$. Hereinafter it is implied that all $\mu, \sigma$ correspond to one specific and only one client at the same time, but we forget $c$ to simplifie the notation.
 
@@ -612,6 +612,49 @@ with
 \subsection{Resolve refund} Provider can choose to agree with the request and resolve it directly. By resolving the request the provider will get his remaing funds and send the client available funds $A$ directly to the client. It is worth noting that the provider has no incentive to resolve request where $S = 0$.
 
 \subsection{Claim refund} The client can claim his funds after the delay if the provider has not disputed nor resolved the request.
+
+\section{Sub-channel applications} In this chapter we describe how to use sub-channels to build a partialy trusted pre-authorized payment layer. Pre-authorized payments sub-channel $\omega_p$ can then be merge into the main channel $\omega$ in a trustless way.
+
+\subsection{Pre-authorized payments sub-channel} We define first a unique sub-channel $\omega_p$ per clients that allow the provider to take an arbitrary amount up to a limit $l$ set by the client at any moment. The rule for this sub-channel are define with the following: (i) at any moment the client risk at max $l$, (ii) $l$ can be increased instantly with cooperation between client and provider, (iii) $l$ can be decreased by $x$ instantly with cooperation if the main channel $\omega$ is increased by $x$, and (iv) $l$ can be decreased without cooperation by the client with some delay.
+
+Sub-channel $\omega_p$ is composed of a sub-channel states $\Sigma^p$ and contract state $M^p \subset M$. Sub-channel states are noted $\sigma^p \in \Sigma^p$. We denote transitions between two sub-channel states with an increase of the limit as $\delta_{\sigma^p}$ or because of a merged into the main channel.
+
+We define the new transition rule for contract states as
+$$\mu \xrightarrow{\delta_\mu \lor \sigma \lor \sigma^p} \mu'$$
+
+the new transition rule for main channel states as
+$$\sigma \xrightarrow{\delta_\sigma \lor \sigma^p \lor \mu \rightarrow \mu'} \sigma'$$
+
+and the new transition rule for sub-channel states as
+$$\sigma^p \xrightarrow{\delta_{\sigma^p} \lor \sigma \xrightarrow{\sigma^p} \sigma'} \sigma^p'$$
+
+We define the new transition rules as
+\begin{equation*}
+\begin{split}
+    \mu \xrightarrow{\sigma^p} \mu' &: \quad \mu' = \mu \cup \sigma^p = \mu \cup \{ \delta_{\sigma^p} \} \\
+    \sigma \xrightarrow{\sigma^p} \sigma' &: \quad \sigma' = \sigma \cup \sigma^p = \sigma \cup \{ \delta_{\sigma^p} \} \\
+    %\sigma \xrightarrow{\delta_{\sigma^p}} \sigma' &: \quad \sigma' = \sigma \cup \{ \delta_{\sigma^p} \}  \\
+    \sigma \xrightarrow{\mu \xrightarrow{\sigma^p} \mu'} \sigma' &: \quad \sigma' =  \sigma \cup \mu' = \sigma \cup \{ \delta_{\sigma^p} \} \\
+\end{split}
+\end{equation*}
+
+It is worth noting that sub-channel states can be enforced directly on the contract layer or merged to the main channel state, but in both case the main channel state is updated accordinaly. We miss two more rule definition
+\begin{equation*}
+\begin{split}
+    \sigma^p \xrightarrow{\delta_{\sigma^p}} \sigma^p' &: \quad \sigma^p' = \sigma^p \cup \{ \delta_{\sigma^p} \} \\
+    \sigma^p \xrightarrow{\sigma \xrightarrow{\sigma^p} \sigma'} \sigma^p' &: \quad \sigma^p' = \sigma^p \setminus \{ \delta_{\sigma^p} \} \\
+\end{split}
+\end{equation*}
+
+When a sub-channel state is merged into the main channel state, the sub-channel is updated and remove the delta merged. In other words the sub-channel state is no longer part of the sub-channel but part of the main channel. The delta is moved to the other layer.
+
+\begin{equation*}
+\begin{split}
+    \Sigma^p&: \emptyset \xrightarrow{\delta_{\sigma^p}} \sigma_1^p \xrightarrow{\sigma_1 \xrightarrow{\sigma_1^p} \sigma_2} \sigma_2^p \\
+    \Sigma&: \emptyset \xrightarrow{\emptyset \xrightarrow{\delta_\mu} \mu_1} \sigma_1 \xrightarrow{\sigma_1^p} \sigma_2 \\
+    M&: \emptyset \xrightarrow{\delta_\mu} \mu_1 \\
+\end{split}
+\end{equation*}
 
 %\section{Acknowledgement} Loan Ventura, Thomas Roulin and Nicolas Huguenin are acknowledged for their helpful contribution and comments during the completion of this work.
 
