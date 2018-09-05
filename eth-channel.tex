@@ -104,7 +104,7 @@ We can notice that each transition in contract states $M$ trigger a transition i
     \mu \xrightarrow{\delta_\mu} \mu' &: \quad \mu' = \mu \cup \{\delta_\mu\} \\
     \mu \xrightarrow{\sigma(\mu)} \mu' &: \quad \mu' = \mu \cup \sigma \\
     \sigma \xrightarrow{\delta_\sigma} \sigma' &: \quad \sigma' = \sigma \cup \{ \delta_\sigma \}  \\
-    \sigma \xrightarrow{\mu \xrightarrow{\delta_\mu} \mu'} \sigma' &: \quad \sigma' =  \sigma \cup \mu' \lor \sigma \cup \{ \delta_\mu \} \\
+    \sigma \xrightarrow{\mu \xrightarrow{\delta_\mu} \mu'} \sigma' &: \quad \sigma' =  \sigma \cup \mu' = \sigma \cup \{ \delta_\mu \} \\
     \sigma \xrightarrow{\mu \xrightarrow{\sigma''(\mu)} \mu'} \sigma' &: \quad \sigma' = \mu' \\
 \end{split}
 \end{equation*}
