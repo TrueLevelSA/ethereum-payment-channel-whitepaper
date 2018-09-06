@@ -613,22 +613,30 @@ with
 
 \subsection{Claim refund} The client can claim his funds after the delay if the provider has not disputed nor resolved the request.
 
-\section{Sub-channel applications} In this chapter we describe how to use sub-channels to build a partialy trusted pre-authorized payment layer. Pre-authorized payments sub-channel $\omega_p$ can then be merge into the main channel $\omega$ in a trustless way.
+\section{Sub-channel applications} In this chapter we describe how to use sub-channels to build a partialy trusted pre-authorized payment layer. Pre-authorized payments in sub-channel $\omega_p$ can be merge at any moment into the main channel $\omega$ given a partialy-trusted model.
 
-\subsection{Pre-authorized payments sub-channel} We define first a unique sub-channel $\omega_p$ per clients that allow the provider to take an arbitrary amount up to a limit $l$ set by the client at any moment. The rule for this sub-channel are define with the following: (i) at any moment the client risk at max $l$, (ii) $l$ can be increased instantly with cooperation between client and provider, (iii) $l$ can be decreased by $x$ instantly with cooperation if the main channel $\omega$ is increased by $x$, and (iv) $l$ can be decreased without cooperation by the client with some delay.
+\subsubsection{Partialy-trusted pre-authorized payments model} We define in this model of pre-authorized payments the amount of trust requiered by the client in favor of the provider. We define the trust as
 
-Sub-channel $\omega_p$ is composed of a sub-channel states $\Sigma^p$ and contract state $M^p \subset M$. Sub-channel states are noted $\sigma^p \in \Sigma^p$. We denote transitions between two sub-channel states with an increase of the limit as $\delta_{\sigma^p}$ or because of a merged into the main channel.
+\begin{quote}
+    At any time the client put at risk at most a pre-autorization of $l$ amount and trust the provider to take $x \leq l$ amount only if necessary. Client can never loose more than $l$ in the case of a provider misbehavior.
+\end{quote}
 
-We define the new transition rule for contract states as
+\subsection{Pre-authorized payments sub-channel} We define first a unique sub-channel $\omega_p$ per clients that allow the provider to take at any moment an arbitrary amount $x \leq l$ up to a limit $l$ set by the client. The sub-channel must follow the partialy-trusted model defined previously. The client must be able to increase the limit $l$ and merge an arbitrary amount $y \leq l$ at any moment into the main channel $\omega$.
+
+%The rule for this sub-channel are define with the following: (i) at any moment the client risk at max $l$, (ii) $l$ can be increased instantly with cooperation between client and provider, (iii) $l$ can be decreased by $x$ instantly with cooperation if the main channel $\omega$ is increased by $x$, and (iv) $l$ can be decreased without cooperation by the client with some delay.
+
+Sub-channel $\omega_p$ is composed of a sub-channel states $\Sigma^p$ and contract state $M^p \subset M$. Sub-channel states are noted $\sigma^p \in \Sigma^p$. We define an increase of the limit $l$ as $\delta_{\sigma^p}$. Transition between two sub-channel state can be triggered with a delta or because of a merged into the main channel.
+
+We redefine the transition condition for contract states as
 $$\mu \xrightarrow{\delta_\mu \lor \sigma \lor \sigma^p} \mu'$$
 
-the new transition rule for main channel states as
+the redefinition of transition condition for main channel states as
 $$\sigma \xrightarrow{\delta_\sigma \lor \sigma^p \lor \mu \rightarrow \mu'} \sigma'$$
 
-and the new transition rule for sub-channel states as
-$$\sigma^p \xrightarrow{\delta_{\sigma^p} \lor \sigma \xrightarrow{\sigma^p} \sigma'} \sigma^p'$$
+and the new transition condition for sub-channel states as
+$$\sigma^p \xrightarrow{\delta_{\sigma^p} \lor \sigma \xrightarrow{\sigma^p} \sigma'} \sigma^{\prime p}$$
 
-We define the new transition rules as
+We define also the new transition rules as
 \begin{equation*}
 \begin{split}
     \mu \xrightarrow{\sigma^p} \mu' &: \quad \mu' = \mu \cup \sigma^p = \mu \cup \{ \delta_{\sigma^p} \} \\
@@ -641,16 +649,53 @@ We define the new transition rules as
 It is worth noting that sub-channel states can be enforced directly on the contract layer or merged to the main channel state, but in both case the main channel state is updated accordinaly. We miss two more rule definition
 \begin{equation*}
 \begin{split}
-    \sigma^p \xrightarrow{\delta_{\sigma^p}} \sigma^p' &: \quad \sigma^p' = \sigma^p \cup \{ \delta_{\sigma^p} \} \\
-    \sigma^p \xrightarrow{\sigma \xrightarrow{\sigma^p} \sigma'} \sigma^p' &: \quad \sigma^p' = \sigma^p \setminus \{ \delta_{\sigma^p} \} \\
+    \sigma^p \xrightarrow{\delta_{\sigma^p}} \sigma^{\prime p} &: \quad \sigma^{\prime p} = \sigma^p \cup \{ \delta_{\sigma^p} \} \\
+    \sigma^p \xrightarrow{\sigma \xrightarrow{\sigma^{\prime\prime p}} \sigma'} \sigma^{\prime p} &: \quad \sigma^{\prime p} = \sigma^p \setminus \sigma^{\prime\prime p} \\
 \end{split}
 \end{equation*}
 
-When a sub-channel state is merged into the main channel state, the sub-channel is updated and remove the delta merged. In other words the sub-channel state is no longer part of the sub-channel but part of the main channel. The delta is moved to the other layer.
+When a sub-channel state is merged into the main channel state, the sub-channel deltas are moved into the state channel and removed from the sub-channel.
+
+\subsubsection{Sub-channel merge} Sub-channel merges can be defined as
+\begin{equation*}
+\begin{split}
+    \Sigma^p&: \sigma_1^p \xrightarrow{\sigma_1 \xrightarrow{\sigma_1^p} \sigma_2} \sigma_2^p \\
+    \Sigma&: \sigma_1 \xrightarrow{\sigma_1^p} \sigma_2 \\
+\end{split}
+\end{equation*}
+
+and states' set can be computed with the previous rules given the base states $\sigma^p_1$ and $\sigma_1$ as
+\begin{align*}
+    \sigma^p_1 &= \{\delta_{\sigma^p}\} \\
+    \sigma_1   &= \{\delta_\sigma\} \\
+    \sigma_2   &= \{\delta_\sigma\} \cup \{\delta_{\sigma^p}\} & &= \{\delta_\sigma,\delta_{\sigma^p}\} \\
+    \sigma^p_2 &= \{\delta_{\sigma^p}\} \setminus \{\delta_\sigma,\delta_{\sigma^p}\} & &= \emptyset \\
+\end{align*}
+
+We say that the main channel state contain a sub-channel state if the sub-channel state has been merged. The rule follows the subset rule
+$$\sigma \subset \sigma^p \iff \exists \sigma' \mid \sigma' \xrightarrow{\sigma^p} \sigma$$
+
+\paragraph{Channels' states pairings} We define pairings of main channel and sub-channel states. States in pairings can be eighter non-exclusive, i.e. both states can be enforced on the contract layer, or mutualy exclusive, i.e. only one of the two states can be enforced.
+
+We define, as prevously shown, four states when a merge appen: $\sigma_1, \sigma_2, \sigma^p_1, \sigma^p_2$. We define tree pairings of states (noted $1, 2, 3$) with only one state in channel and sub-channel as
+\begin{equation*}
+    \begin{matrix}
+        \sigma^p_1 & \xrightarrow{\sigma_1 \xrightarrow{\sigma^p_1} \sigma_2} & \sigma^p_2 \\
+        \vdots_1 & \ddots_2 & \vdots_3 \\
+        \sigma_1 & \xrightarrow{\sigma^p_1} & \sigma_2 \\
+    \end{matrix}
+\end{equation*}
+
+To guarentee the partialy-trusted model the pairing 1 is non-exclusive and must be valid at any moment but must invalidate the pairing 3. The inverse is also true. The pairing 2 must be mutualy exclusive, e.g. if $\sigma^p_1$ is enforced then $\sigma_2 : \sigma_2 \subset \sigma^p_1$ must be invalid in the contract layer. Otherwise deltas in $\sigma^p_1$ can be used twice and the partialy-trusted model is broken.
+
+The fourth pairing $(\sigma_1, \sigma^p_2)$ is valid but does not represent a threat for the clients. Deltas merged in $\sigma_2$ are removed in $\sigma^p_2$ because of the rule
+$$\sigma^p \xrightarrow{\sigma \xrightarrow{\sigma^{\prime\prime p}} \sigma'} \sigma^{\prime p} : \quad \sigma^{\prime p} = \sigma^p \setminus \sigma^{\prime\prime p}$$
+
+and are not in $\sigma_1$. So $\sigma_1 + \sigma^p_2$ have less value than the tree other pairings. It is worth noting that the pairing 3 $(\sigma_2, \sigma^p_2)$ is equal to $(\sigma_2, \emptyset)$ and then is the same as only enforced $\sigma_2$.
 
 \begin{equation*}
 \begin{split}
-    \Sigma^p&: \emptyset \xrightarrow{\delta_{\sigma^p}} \sigma_1^p \xrightarrow{\sigma_1 \xrightarrow{\sigma_1^p} \sigma_2} \sigma_2^p \\
+    \Sigma^p&: \emptyset \xrightarrow{\delta_{\sigma^p}} \sigma_1^p \xrightarrow{\sigma_1 \xrightarrow{\sigma_1^p} \sigma_2} \sigma_2^p \xrightarrow{\delta_{\sigma^{\prime p}}} \sigma_3^p \\
     \Sigma&: \emptyset \xrightarrow{\emptyset \xrightarrow{\delta_\mu} \mu_1} \sigma_1 \xrightarrow{\sigma_1^p} \sigma_2 \\
     M&: \emptyset \xrightarrow{\delta_\mu} \mu_1 \\
 \end{split}
