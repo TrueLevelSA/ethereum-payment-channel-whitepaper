@@ -656,7 +656,7 @@ It is worth noting that sub-channel states can be enforced directly on the contr
 
 When a sub-channel state is merged into the main channel state, the sub-channel deltas are moved into the state channel and removed from the sub-channel.
 
-\subsubsection{Sub-channel merge} Sub-channel merges can be defined as
+\subsubsection{Sub-channel merge} Sub-channel merges move the total limit $l$ (sum of all deltas in sub-channel state) into the main channel and can be defined as
 \begin{equation*}
 \begin{split}
     \Sigma^p&: \sigma_1^p \xrightarrow{\sigma_1 \xrightarrow{\sigma_1^p} \sigma_2} \sigma_2^p \\
@@ -664,18 +664,18 @@ When a sub-channel state is merged into the main channel state, the sub-channel 
 \end{split}
 \end{equation*}
 
-and states' set can be computed with the previous rules given the base states $\sigma^p_1$ and $\sigma_1$ as
+where $\sigma_2$ contain all deltas, i.e. the total limit $l$. Set's states can be computed with the previous rules given the base states $\sigma^p_1$ and $\sigma_1$ as
 \begin{align*}
     \sigma^p_1 &= \{\delta_{\sigma^p}\} \\
     \sigma_1   &= \{\delta_\sigma\} \\
     \sigma_2   &= \{\delta_\sigma\} \cup \{\delta_{\sigma^p}\} & &= \{\delta_\sigma,\delta_{\sigma^p}\} \\
-    \sigma^p_2 &= \{\delta_{\sigma^p}\} \setminus \{\delta_\sigma,\delta_{\sigma^p}\} & &= \emptyset \\
+    \sigma^p_2 &= \{\delta_{\sigma^p}\} \setminus \{\delta_\sigma,\delta_{\sigma^p}\} & &= \emptyset
 \end{align*}
 
-We say that the main channel state contain a sub-channel state if the sub-channel state has been merged. The rule follows the subset rule
-$$\sigma \subset \sigma^p \iff \exists \sigma' \mid \sigma' \xrightarrow{\sigma^p} \sigma$$
+We say that the main channel state contain a sub-channel state if the sub-channel state has been merged. The rule follows the superset rule
+$$\sigma \supset \sigma^p \iff \exists \sigma' \mid \sigma' \xrightarrow{\sigma^p} \sigma$$
 
-\paragraph{Channels' states pairings} We define pairings of main channel and sub-channel states. States in pairings can be eighter non-exclusive, i.e. both states can be enforced on the contract layer, or mutualy exclusive, i.e. only one of the two states can be enforced.
+\paragraph{Channels' states pairings} We define pairings of main channel and sub-channel states. States in pairings can be eighter non-exclusive $\parallel$, i.e. both states can be enforced on the contract layer, or mutualy exclusive $\perp$, i.e. only one of the two states can be enforced.
 
 We define, as prevously shown, four states when a merge appen: $\sigma_1, \sigma_2, \sigma^p_1, \sigma^p_2$. We define tree pairings of states (noted $1, 2, 3$) with only one state in channel and sub-channel as
 \begin{equation*}
@@ -686,20 +686,34 @@ We define, as prevously shown, four states when a merge appen: $\sigma_1, \sigma
     \end{matrix}
 \end{equation*}
 
-To guarentee the partialy-trusted model the pairing 1 is non-exclusive and must be valid at any moment but must invalidate the pairing 3. The inverse is also true. The pairing 2 must be mutualy exclusive, e.g. if $\sigma^p_1$ is enforced then $\sigma_2 : \sigma_2 \subset \sigma^p_1$ must be invalid in the contract layer. Otherwise deltas in $\sigma^p_1$ can be used twice and the partialy-trusted model is broken.
+To guarentee the partialy-trusted model the pairing 1 is non-exclusive and must be valid at any moment but must invalidate the pairing 3. The inverse is also true. The pairing 2 must be mutualy exclusive, e.g. if $\sigma^p_1$ is enforced then $\sigma_2 : \sigma_2 \supset \sigma^p_1$ must be invalid in the contract layer. Otherwise deltas in $\sigma^p_1$ can be used twice and the partialy-trusted model is broken. 
+
+Given the previous case we can derive generic rules
+$$\forall (\sigma, \sigma^p) : \sigma \perp \sigma^p \iff \sigma \supset \sigma^p$$
+
+and
+$$\forall (\sigma, \sigma^p) : \sigma \parallel \sigma^p \iff \sigma \not \supset \sigma^p$$
 
 The fourth pairing $(\sigma_1, \sigma^p_2)$ is valid but does not represent a threat for the clients. Deltas merged in $\sigma_2$ are removed in $\sigma^p_2$ because of the rule
 $$\sigma^p \xrightarrow{\sigma \xrightarrow{\sigma^{\prime\prime p}} \sigma'} \sigma^{\prime p} : \quad \sigma^{\prime p} = \sigma^p \setminus \sigma^{\prime\prime p}$$
 
 and are not in $\sigma_1$. So $\sigma_1 + \sigma^p_2$ have less value than the tree other pairings. It is worth noting that the pairing 3 $(\sigma_2, \sigma^p_2)$ is equal to $(\sigma_2, \emptyset)$ and then is the same as only enforced $\sigma_2$.
 
-\begin{equation*}
-\begin{split}
-    \Sigma^p&: \emptyset \xrightarrow{\delta_{\sigma^p}} \sigma_1^p \xrightarrow{\sigma_1 \xrightarrow{\sigma_1^p} \sigma_2} \sigma_2^p \xrightarrow{\delta_{\sigma^{\prime p}}} \sigma_3^p \\
-    \Sigma&: \emptyset \xrightarrow{\emptyset \xrightarrow{\delta_\mu} \mu_1} \sigma_1 \xrightarrow{\sigma_1^p} \sigma_2 \\
-    M&: \emptyset \xrightarrow{\delta_\mu} \mu_1 \\
-\end{split}
-\end{equation*}
+\subsubsection{Sub-channel partial merge} Sub-channel partial merges move an arbitrary amount $y < l$ into the main channel and can be defined as
+\begin{align*}
+    \Sigma^p&: \sigma_1^p \xrightarrow{\sigma_1 \xrightarrow{\sigma_1^p} \sigma_2} \sigma_2^p \xrightarrow{\delta^\prime_{\sigma^p}} \sigma_3^p & &\mid l(\delta^\prime_{\sigma^p}) = l - y \\
+    \Sigma&: \sigma_1 \xrightarrow{\sigma_1^p} \sigma_2 & &\mid y(\sigma_1^p) < l
+\end{align*}
+
+where initial limit $l = \sigma^p_1$ and $\sigma^p_1 \perp \sigma_2 \land \sigma^p_3 \parallel \sigma_2$. The security of a partial merge inherit the security of a merge only if the value of pairing $(\sigma_2, \sigma^p_3)$ is greather or equal to pairing $(\sigma_1, \sigma^p_1)$.
+
+%\begin{equation*}
+%\begin{split}
+%    \Sigma^p&: \emptyset \xrightarrow{\delta_{\sigma^p}} \sigma_1^p \xrightarrow{\sigma_1 \xrightarrow{\sigma_1^p} \sigma_2} \sigma_2^p \xrightarrow{\delta^\prime_{\sigma^p}} \sigma_3^p \\
+%    \Sigma&: \emptyset \xrightarrow{\emptyset \xrightarrow{\delta_\mu} \mu_1} \sigma_1 \xrightarrow{\sigma_1^p} \sigma_2 \\
+%    M&: \emptyset \xrightarrow{\delta_\mu} \mu_1 \\
+%\end{split}
+%\end{equation*}
 
 %\section{Acknowledgement} Loan Ventura, Thomas Roulin and Nicolas Huguenin are acknowledged for their helpful contribution and comments during the completion of this work.
 
