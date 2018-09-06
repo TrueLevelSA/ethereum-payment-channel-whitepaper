@@ -93,7 +93,7 @@ $$s \xrightarrow{t} s' \land s' \xrightarrow{t'} s'' \implies s \xrightarrow{t +
 We define predecessor and successor in states $\Sigma$ and $M$. If state $s$ is a predecessor of $s'$ we denote them as $s \prec s'$, or $s'$ is a successor of $s$ as $s' \succ s$. We denote the latest transition of a certain type as $\lceil \xrightarrow{t} \rceil$.
 
 Layers are linked tougether, changes in contract layer affect the channel layer and the channel layer can be dictated, or applied, on the contract layer. We denote the application of $\sigma$ on $\mu$, i.e. dictate a channel state on the contract layer, also as $\sigma(\mu) = \mu'$. The full transition rule for contract states is define as
-$$\mu \xrightarrow{\delta_\mu \lor \sigma(\mu)} \mu'$$
+$$\mu \xrightarrow{\delta_\mu \lor \sigma} \mu'$$
 
 and the full transition rule for channel states as
 $$\sigma \xrightarrow{\delta_\sigma \lor \mu \rightarrow \mu'} \sigma'$$
@@ -102,22 +102,22 @@ We can notice that each transition in contract states $M$ trigger a transition i
 \begin{equation*}
 \begin{split}
     \mu \xrightarrow{\delta_\mu} \mu' &: \quad \mu' = \mu \cup \{\delta_\mu\} \\
-    \mu \xrightarrow{\sigma(\mu)} \mu' &: \quad \mu' = \mu \cup \sigma \\
+    \mu \xrightarrow{\sigma} \mu' &: \quad \mu' = \mu \cup \sigma \\
     \sigma \xrightarrow{\delta_\sigma} \sigma' &: \quad \sigma' = \sigma \cup \{ \delta_\sigma \}  \\
     \sigma \xrightarrow{\mu \xrightarrow{\delta_\mu} \mu'} \sigma' &: \quad \sigma' =  \sigma \cup \mu' = \sigma \cup \{ \delta_\mu \} \\
-    \sigma \xrightarrow{\mu \xrightarrow{\sigma''(\mu)} \mu'} \sigma' &: \quad \sigma' = \mu' \\
+    \sigma \xrightarrow{\mu \xrightarrow{\sigma''} \mu'} \sigma' &: \quad \sigma' = \mu' \\
 \end{split}
 \end{equation*}
 
-It is worth noting that the last rule $\sigma \xrightarrow{\mu \xrightarrow{\sigma''(\mu)} \mu'} \sigma'$ has implication on the validity of deltas. Because the resulting channel state $\sigma'$ is equal to the contract state $\mu'$, all deltas $\delta_\sigma$ applied between the dictated state $\sigma''$ and the starting state $\sigma$, where $\sigma'' \preceq \sigma$, are discarded. If we have
+It is worth noting that the last rule $\sigma \xrightarrow{\mu \xrightarrow{\sigma''} \mu'} \sigma'$ has implication on the validity of deltas. Because the resulting channel state $\sigma'$ is equal to the contract state $\mu'$, all deltas $\delta_\sigma$ applied between the dictated state $\sigma''$ and the starting state $\sigma$, where $\sigma'' \preceq \sigma$, are discarded. If we have
 \begin{equation*}
 \begin{split}
-    \Sigma&: \emptyset \xrightarrow{\emptyset \xrightarrow{\delta_\mu} \mu_1} \sigma_1 \xrightarrow{\delta_\sigma} \sigma_2 \xrightarrow{\delta_\sigma'} \sigma_3 \xrightarrow{\mu_1 \xrightarrow{\sigma_2(\mu_1)} \mu_2} \sigma_4\\
-    M&: \emptyset \xrightarrow{\delta_\mu} \mu_1 \xrightarrow{\sigma_2(\mu_1)} \mu_2 \\
+    \Sigma&: \emptyset \xrightarrow{\emptyset \xrightarrow{\delta_\mu} \mu_1} \sigma_1 \xrightarrow{\delta_\sigma} \sigma_2 \xrightarrow{\delta_\sigma'} \sigma_3 \xrightarrow{\mu_1 \xrightarrow{\sigma_2} \mu_2} \sigma_4\\
+    M&: \emptyset \xrightarrow{\delta_\mu} \mu_1 \xrightarrow{\sigma_2} \mu_2 \\
 \end{split}
 \end{equation*}
 
-with application validity of a channel state $\sigma$ on a contract state $\mu$ ruled by
+we can see that a channel state $\sigma$ can be dictated on a contract state $\mu$ if the channel state is a successor of the latest updated state
 $$\sigma(\mu) \iff \sigma \succ \sigma'' : \sigma' \lceil \xrightarrow{\mu \xrightarrow{\sigma'''} \mu'} \rceil \sigma''$$
 
 %\begin{equation*}
@@ -127,7 +127,7 @@ $$\sigma(\mu) \iff \sigma \succ \sigma'' : \sigma' \lceil \xrightarrow{\mu \xrig
 %\end{align*}
 %\end{equation*}
 
-We see that all channel states based on $\sigma_4$ will never contain $\delta_\sigma'$ becase the dictated channel state used is $\sigma_2$ and not $\sigma_3$, then as soon as $\sigma_2$ has been applied $\sigma_3$ became invalid by the given rule.
+We see that all channel states based on $\sigma_4$ will never contain $\delta_\sigma'$ becase the dictated channel state used is $\sigma_2$ and not $\sigma_3$, then as soon as $\sigma_2$ has been applied $\sigma_3$ became invalid by the previous rule.
 \begin{align*}
     \mu_1    &= \emptyset \cup \{\delta_\mu\} & &= \{\delta_\mu\} \\
     \sigma_1 &= \emptyset \cup \{\delta_\mu\} & &= \{\delta_\mu\} \\
