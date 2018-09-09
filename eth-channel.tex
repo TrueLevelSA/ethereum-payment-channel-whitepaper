@@ -63,7 +63,7 @@
 
 \maketitle
 
-\begin{abstract} Ethereum is a distributed computing platform and operating system featuring smart contract functionality. Transactions are faster than other blockchain but not instant and each of them cost some ``gas''. This gas is used to quantify the amount of fee to pay for computation. \keywords{Crypto-currencies, Ethereum, Payment channels}
+\begin{abstract} Ethereum is a distributed computing platform and operating system featuring smart contract functionality. Transactions are faster than many other blockchains but not instant and each of them cost some ``gas''. This gas is used to quantify the amount of fee to pay for computation. \keywords{Crypto-currencies, Ethereum, Payment channels}
 \end{abstract}
 
 \section{Introduction}
@@ -73,32 +73,32 @@ The key words ``MUST", ``MUST NOT", ``REQUIRED", ``SHALL", ``SHALL NOT",
 ``SHOULD", ``SHOULD NOT", ``RECOMMENDED", ``MAY", and ``OPTIONAL" in this
 document are to be interpreted as described in RFC 2119 \cite{Bradner1997}.
 
-\section{Multi-clients payment channels} Partially non-interactive multi-clients payment channels are composed of clients $c \in \mathcal{C}$ and one provider $\mathcal{P}$. $\mathcal{C}$ is the set of all clients registred in the multi-clients payment channel. Clients can send money to the provider through the channel but cannot recieve through the channel.
+\section{Multi-clients payment channels} Partially non-interactive multi-clients payment channels are composed of clients $c \in \mathcal{C}$ and one provider $\mathcal{P}$. $\mathcal{C}$ is the set of all clients registered in the multi-clients payment channel. Clients can send money to the provider through the channel but cannot receive through the channel.
 
-A payment channel is by definition a structure composed of two layers of states. The first layer of states is registered to the blockchain, i.e. ``on-chain'' or contract states $\mu \in M$, and the second layer of states is kept ``off-chain'' between the participants and the provider, i.e. channel states $\sigma \in \Sigma$. States are sets of deltas. A delta represent an atomic change in a state. Delta changes $\delta \in \Delta$ are used to transition from one state to another.
+A payment channel is by definition a structure composed of two layers of states. The first layer of states is registered on the blockchain, i.e. ``on-chain'' or contract states $\mu \in M$, and the second layer of states is kept ``off-chain'' between the participants and the provider, i.e. channel states $\sigma \in \Sigma$. States are sets of deltas. A delta represents an atomic change in a state. Delta changes $\delta \in \Delta$ are used to transition from one state to another.
 
-We denote a main channel $\omega \in \Omega$ and assume the existance of sub-channels. The main channel $\omega$ is composed of two layers previously defined $(\Sigma, M)$.
+We denote a main channel $\omega \in \Omega$ and assume the existence of sub-channels. The main channel $\omega$ is composed of two layers previously defined $(\Sigma, M)$.
 
-Each client have a pair of states $(\mu_c, \sigma_c)$ shared with the provider. Only the latest pair is relevent, for each transition the new state in $\Sigma$ or $M$ is kept. We denote $\mu_c$ and $\sigma_c$ the contract and channel states for a client $c \in \mathcal{C}$. Hereinafter it is implied that all $\mu, \sigma$ correspond to one specific and only one client at the same time, but we forget $c$ to simplifie the notation.
+Each client have a pair of states $(\mu_c, \sigma_c)$ shared with the provider. Only the latest pair is relevant, for each transition the new state in $\Sigma$ or $M$ is kept. We denote $\mu_c$ and $\sigma_c$ the contract and channel states for a client $c \in \mathcal{C}$. Hereinafter it is implied that all $\mu, \sigma$ correspond to one specific and only one client at any given time, but we forget $c$ to simplify the notation.
 
-Transition from a state to another state are denoted with $\rightarrow$, e.g. $\sigma \rightarrow \sigma'$ or $\mu \rightarrow \mu'$. Transitions in $\Sigma$ depends on particular deltas in $\Delta_\sigma$ noted $\delta_\sigma$. We denote a transition from $\sigma, \sigma' \in \Sigma$ that depends on $\delta_\sigma \in \Delta_\sigma$ as
+Transition from one state to another is denoted with $\rightarrow$, e.g. $\sigma \rightarrow \sigma'$ or $\mu \rightarrow \mu'$. Transitions in $\Sigma$ depend on particular deltas in $\Delta_\sigma$ noted $\delta_\sigma$. We denote a transition from $\sigma, \sigma' \in \Sigma$ that depends on $\delta_\sigma \in \Delta_\sigma$ as
 $$\sigma \xrightarrow{\delta_\sigma} \sigma'$$
 
 And transitions in $M$ depending on particular deltas in $\Delta_\mu$ noted $\delta_\mu$ as
 $$\mu \xrightarrow{\delta_\mu} \mu'$$
 
-Transitivity law is applied on transitions. If it exists a transition from a state $s$ to another state $s'$ that depends on $t$ and $s'$ to $s''$ depending on $t'$, then it exists a transition from $s$ to $s''$ as
+Transitivity law is applied on transitions. If thre exists a transition from a state $s$ to another state $s'$ that depends on $t$ and $s'$ to $s''$ depending on $t'$, then there exists a transition from $s$ to $s''$ as
 $$s \xrightarrow{t} s' \land s' \xrightarrow{t'} s'' \implies s \xrightarrow{t + t'} s''$$
 
 We define predecessor and successor in states $\Sigma$ and $M$. If state $s$ is a predecessor of $s'$ we denote them as $s \prec s'$, or $s'$ is a successor of $s$ as $s' \succ s$. We denote the latest transition of a certain type as $\lceil \xrightarrow{t} \rceil$.
 
-Layers are linked tougether, changes in contract layer affect the channel layer and the channel layer can be dictated, or applied, on the contract layer. We denote the application of $\sigma$ on $\mu$, i.e. dictate a channel state on the contract layer, also as $\sigma(\mu) = \mu'$. The full transition rule for contract states is define as
+Layers are linked together, changes in contract layer affect the channel layer and the channel layer can be dictated, or applied, on the contract layer. We denote the application of $\sigma$ on $\mu$, i.e. dictate a channel state on the contract layer, also as $\sigma(\mu) = \mu'$. The full transition rule for contract states is defined as
 $$\mu \xrightarrow{\delta_\mu \lor \sigma} \mu'$$
 
 and the full transition rule for channel states as
 $$\sigma \xrightarrow{\delta_\sigma \lor \mu \rightarrow \mu'} \sigma'$$
 
-We can notice that each transition in contract states $M$ trigger a transition in channel states $\Sigma$. States are represented as sets of deltas $\delta \in \Delta$. We define how to compute the resulted state.
+We can notice that each transition in contract states $M$ triggers a transition in channel states $\Sigma$. States are represented as sets of deltas $\delta \in \Delta$. We define how to compute the resulting state.
 \begin{equation*}
 \begin{split}
     \mu \xrightarrow{\delta_\mu} \mu' &: \quad \mu' = \mu \cup \{\delta_\mu\} \\
@@ -109,7 +109,7 @@ We can notice that each transition in contract states $M$ trigger a transition i
 \end{split}
 \end{equation*}
 
-It is worth noting that the last rule $\sigma \xrightarrow{\mu \xrightarrow{\sigma''} \mu'} \sigma'$ has implication on the validity of deltas. Because the resulting channel state $\sigma'$ is equal to the contract state $\mu'$, all deltas $\delta_\sigma$ applied between the dictated state $\sigma''$ and the starting state $\sigma$, where $\sigma'' \preceq \sigma$, are discarded. If we have
+It is worth noting that the last rule $\sigma \xrightarrow{\mu \xrightarrow{\sigma''} \mu'} \sigma'$ has implications on the validity of deltas. Because the resulting channel state $\sigma'$ is equal to the contract state $\mu'$, all deltas $\delta_\sigma$ applied between the dictated state $\sigma''$ and the starting state $\sigma$, where $\sigma'' \preceq \sigma$, are discarded. If we have
 \begin{equation*}
 \begin{split}
     \Sigma&: \emptyset \xrightarrow{\emptyset \xrightarrow{\delta_\mu} \mu_1} \sigma_1 \xrightarrow{\delta_\sigma} \sigma_2 \xrightarrow{\delta_\sigma'} \sigma_3 \xrightarrow{\mu_1 \xrightarrow{\sigma_2} \mu_2} \sigma_4\\
@@ -127,7 +127,7 @@ $$\sigma(\mu) \iff \sigma \succ \sigma'' : \sigma' \lceil \xrightarrow{\mu \xrig
 %\end{align*}
 %\end{equation*}
 
-We see that all channel states based on $\sigma_4$ will never contain $\delta_\sigma'$ becase the dictated channel state used is $\sigma_2$ and not $\sigma_3$, then as soon as $\sigma_2$ has been applied $\sigma_3$ became invalid by the previous rule.
+We see that all channel states based on $\sigma_4$ will never contain $\delta_\sigma'$ because the dictated channel state used is $\sigma_2$ and not $\sigma_3$, then as soon as $\sigma_2$ is applied $\sigma_3$ becomes invalid by the previous rule.
 \begin{align*}
     \mu_1    &= \emptyset \cup \{\delta_\mu\} & &= \{\delta_\mu\} \\
     \sigma_1 &= \emptyset \cup \{\delta_\mu\} & &= \{\delta_\mu\} \\
@@ -149,14 +149,14 @@ We see that all channel states based on $\sigma_4$ will never contain $\delta_\s
 
 \subsubsection{Current validity index, $I_\mu$} For each client the current index $I_\mu$ must be retreivable, $\forall c \in \mathcal{C}, \quad \exists I_\mu \in \mu >= 0$. The index for a client must start from $0$.
 
-\subsubsection{Current contract client balance, $B_\mu$} For each client the current contract balance amount must be retreivable, $\forall c \in \mathcal{C}, \quad \exists B_\mu \in \mu >= 0$. It is worth noting that this current contract balance is not the same as the current channel balance or, in other words, the channel remaining amount of a client.
+\subsubsection{Current contract client balance, $B_\mu$} For each client the current contract balance amount must be retrievable, $\forall c \in \mathcal{C}, \quad \exists B_\mu \in \mu >= 0$. It is worth noting that this current contract balance is not the same as the current channel balance or, in other words, the remaining amount of a client in the channel.
 
-\subsubsection{Current provider refund amount, $R_\mathcal{P}$} For each client the current provider refund amount must be retreivable, $\forall c \in \mathcal{C}, \quad \exists R_\mathcal{P} \in \mu$ such that $R_\mathcal{P}$ is the provider owned amount at the moment of the request. The remaing money must go to the client.
+\subsubsection{Current provider refund amount, $R_\mathcal{P}$} For each client the current provider refund amount must be retrievable, $\forall c \in \mathcal{C}, \quad \exists R_\mathcal{P} \in \mu$ such that $R_\mathcal{P}$ is the provider owned amount at the moment of the request. The remaining money must go to the client.
 
 \subsection{Contract states} Each client $c \in \mathcal{C}$ in the contract is defined by an on-chain state $\mu_c \in M$. States $\mu \in M$ are represented as
 $$\mu_c = (I_\mu, B_\mu, R_\mathcal{P})$$
 
-\subsection{Channel state variables} We define variables to represent: (i) the lifetime of a single channel in the multi-clients channel architecture, (ii) the total amount deposited for a client over the lifetime, (iii) the total amount own by the provider over the lifetime, and (iv) the minimal and full available amount for the client.
+\subsection{Channel state variables} We define variables to represent: (i) the lifetime of a single channel in the multi-clients channel architecture, (ii) the total amount deposited for a client over the lifetime, (iii) the total amount sent to the provider over the lifetime, and (iv) the minimal and full available amount for the client.
 
 \subsubsection{Channel lifetime} It exists one lifetime and only one per element in $\mathcal{C} \times \mathcal{P}$ and begins when the first deposit is made, i.e. one lifetime per client $c \in \mathcal{C}$.
 
@@ -261,18 +261,18 @@ It is a full refund if the client available funds in the channel for the client 
 \subsubsection{Dispute} $(I_\mu, B_\mu,R_\mathcal{P}) \xrightarrow{m} (I_\mu, 0, 0)$ where
 $$m = (I_m, B_\sigma, D_m, S)\ |\ I_m = I_\mu$$
 
-If $O(\mathcal{P}) > R_\mathcal{P}$ the provider won the dispute and $O(\mathcal{P})$ is transfer to the provider plus some penalities, the rest is sent to the client.
+If $O(\mathcal{P}) > R_\mathcal{P}$ the provider wins the dispute and $O(\mathcal{P})$ is transferred to the provider plus some penalty, the rest is sent to the client.
 
 \subsubsection{Resolve} $(I_\mu, B_\mu,R_\mathcal{P}) \xrightarrow{m} (I_\mu, 0, 0)$ where
 $$m = (I_m, B_\sigma, D_m, S)\ |\ I_m = I_\mu$$
 
-If $O(\mathcal{P}) = R_\mathcal{P}$ the provider accept the refund. $O(\mathcal{P})$ is transfer to the provider and the rest is sent to the client imediately.
+If $O(\mathcal{P}) = R_\mathcal{P}$ the provider accepts the refund. $O(\mathcal{P})$ is transferred to the provider and the rest is sent to the client immediately.
 
 \subsubsection{Top up} $(I_\mu, B_\mu,R_\mathcal{P}) \xrightarrow{\delta_\mu(a)} (I_\mu, B_\mu+a,R_\mathcal{P})$. Top up increases the contract balance for a client $c \in \mathcal{C}$. Validity index $I_\mu$ must not be incremented during the top up.
 
-\subsubsection{Invalid settlement} $(I_\mu, B_\mu,R_\mathcal{P}) \rightarrow (I_\mu, B_\mu\downarrow,R_\mathcal{P})$. This transition is invalid because the balance is decreased without incrementing the validity index $I_\mu$. The current set of transactions must be invalidate after the settlement.
+\subsubsection{Invalid settlement} $(I_\mu, B_\mu,R_\mathcal{P}) \rightarrow (I_\mu, B_\mu\downarrow,R_\mathcal{P})$. This transition is invalid because the balance is decreased without incrementing the validity index $I_\mu$. The current set of transactions must be invalidated after the settlement.
 
-\subsubsection{Invalid top up} $(I_\mu, B_\mu,R_\mathcal{P}) \rightarrow (I_\mu+1, B_\mu\uparrow,R_\mathcal{P})$. Increasing validity index $I_\mu$ while increasing the contract balance invalidates the set of transaction $I_\mu$. The current set of transactions must be invalidated only during a settlement.
+\subsubsection{Invalid top up} $(I_\mu, B_\mu,R_\mathcal{P}) \rightarrow (I_\mu+1, B_\mu\uparrow,R_\mathcal{P})$. Increasing validity index $I_\mu$ while increasing the contract balance invalidates the set of transactions $I_\mu$. The current set of transactions must be invalidated only during a settlement.
 
 \subsubsection{Invalid validity index} $(I_\mu, B_\mu,R_\mathcal{P}) \rightarrow (I_\mu\downarrow, \_, \_)$. Decreasing the validity index $I_\mu$ is always invalid. Validity index must not be decreased.
 
@@ -550,17 +550,17 @@ $$D = S + R \land B_\mu = 0$$
   \caption{Settlement after top up and refund resolved}
 \end{table}
 
-\section{Protocol} The protocol describes interactions between clients and the provider and messages negociation. Protocol define the derivation of directives from messages.
+\section{Protocol} The protocol describes interactions between clients and the provider and message negotiation. Protocol defines the derivation of directives from messages.
 
-\subsubsection{Client actions} A client can send money through the channel and refund his money after some time if he submited the right message $m$ corresponding to the lastest channel state $\sigma$.
+\subsubsection{Client actions} A client can send money through the channel and refund his money after some time if he submitted the right message $m$ corresponding to the latest channel state $\sigma$.
 
-\subsubsection{Provider actions} The provider can settle channels with his lastest message corresponding to the latest channel state. If a client requested a refund, the provider has the choice to dispute it or resolve it.
+\subsubsection{Provider actions} The provider can settle channels with his latest message corresponding to the latest channel state. If a client requests a refund, the provider has the choice to dispute it or resolve it.
 
 \subsubsection{Anyone actions} Anyone can top up a channel for himself or for another client.
 
-\subsection{Payment, $\delta_\sigma(a)$} Payment are negociated with of one acquire directive for the provider signed by the client.
+\subsection{Payment, $\delta_\sigma(a)$} Payments are negotiated with of one acquire directive for the provider signed by the client.
 
-\subsubsection{Settle directive, $d_s$} Settle directive $d_s$ allow the provider to claim imediately, i.e. without any delay, his owned amount for a specific channel. The client must not be able to applied a settle directive on behalf of the provider.
+\subsubsection{Settle directive, $d_s$} Settle directive $d_s$ allows the provider to claim immediately, i.e. without any delay, his owned amount for a specific channel. The client must not be able to apply a settle directive on behalf of the provider.
 \begin{equation*}
 \begin{split}
     h &= \texttt{keccak256}(\texttt{contract},c,I_m,B_\sigma,D_m,S) \\
@@ -568,9 +568,9 @@ $$D = S + R \land B_\mu = 0$$
 \end{split}
 \end{equation*}
 
-\subsection{Refund} Opening a refund is performed with one directive self-generated by the client and signed by himself. The provider must not be able to create directives $d_r$ nor applied a refund directive on behalf of the client.
+\subsection{Refund} Opening a refund is performed with one directive self-generated by the client and signed by himself. The provider must not be able to create directives $d_r$ nor apply a refund directive on behalf of the client.
 
-\subsubsection{Refund directive, $d_r$} Refund directive $d_r$ allow the client to claim all the remaing funds and transfer them after some delay if the provider is not able to dispute the claim nor did not resolve the request. The provider is not able to dispute the claim if the directive is generated from the message derived by the latest channel state in $\Sigma$.
+\subsubsection{Refund directive, $d_r$} Refund directive $d_r$ allows the client to claim all the remaining funds and transfer them after some delay if the provider is not able to dispute the claim nor resolves the request. The provider is not able to dispute the claim if the directive is generated from the message derived by the latest channel state in $\Sigma$.
 \begin{equation*}
 \begin{split}
     h &= \texttt{keccak256}(\texttt{contract},c,I_m,O(\mathcal{P})) \\
@@ -586,7 +586,7 @@ with
 \end{split}
 \end{equation*}
 
-A refund request can be closed in tree different maners
+A refund request can be closed in three different manners
 \begin{equation*}
 \begin{split}
     \text{close a refund by}
@@ -609,23 +609,23 @@ with
 \end{split}
 \end{equation*}
 
-\subsection{Resolve refund} Provider can choose to agree with the request and resolve it directly. By resolving the request the provider will get his remaing funds and send the client available funds $A$ directly to the client. It is worth noting that the provider has no incentive to resolve request where $S = 0$.
+\subsection{Resolve refund} Provider can choose to agree with the request and resolve it directly. By resolving the request the provider will get his remaining funds and send the client available funds $A$ directly to the client. It is worth noting that the provider has no incentive to resolve requests where $S = 0$.
 
 \subsection{Claim refund} The client can claim his funds after the delay if the provider has not disputed nor resolved the request.
 
-\section{Sub-channel applications} In this chapter we describe how to use sub-channels to build a partialy trusted pre-authorized payment layer. Pre-authorized payments in sub-channel $\omega_p$ can be merge at any moment into the main channel $\omega$ given a partialy-trusted model.
+\section{Sub-channel applications} In this chapter we describe how to use sub-channels to build a partially trusted pre-authorized payment layer. Pre-authorized payments in sub-channel $\omega_p$ can be merged at any moment into the main channel $\omega$ given a partially-trusted model.
 
-\subsubsection{Partialy-trusted pre-authorized payments model} We define in this model of pre-authorized payments the amount of trust requiered by the client in favor of the provider. We define the trust as
+\subsubsection{Partially-trusted pre-authorized payments model} We define in this model of pre-authorized payments the amount of trust required by the client in favour of the provider. We define the trust as
 
 \begin{quote}
-    At any time the client put at risk at most a pre-autorization of $l$ amount and trust the provider to take $x \leq l$ amount only if necessary. Client can never loose more than $l$ in the case of a provider misbehavior.
+    At any time the client puts at risk at most a pre-authorization of $l$ amount and trusts the provider to take $x \leq l$ amount only when necessary. Client can never loose more than $l$ in the case of a provider misbehaving.
 \end{quote}
 
-\subsection{Pre-authorized payments sub-channel} We define first a unique sub-channel $\omega_p$ per clients that allow the provider to take at any moment an arbitrary amount $x \leq l$ up to a limit $l$ set by the client. The sub-channel must follow the partialy-trusted model defined previously. The client must be able to increase the limit $l$ and merge an arbitrary amount $y \leq l$ at any moment into the main channel $\omega$.
+\subsection{Pre-authorized payments sub-channel} We first define a unique sub-channel $\omega_p$ per client that allows the provider at any moment to take an arbitrary amount $x \leq l$ up to a limit $l$ set by the client. The sub-channel must follow the partially-trusted model defined previously. The client must be able to increase the limit $l$ and merge an arbitrary amount $y \leq l$ at any moment into the main channel $\omega$.
 
-%The rule for this sub-channel are define with the following: (i) at any moment the client risk at max $l$, (ii) $l$ can be increased instantly with cooperation between client and provider, (iii) $l$ can be decreased by $x$ instantly with cooperation if the main channel $\omega$ is increased by $x$, and (iv) $l$ can be decreased without cooperation by the client with some delay.
+%The rules for this sub-channel are defined by the following: (i) at any moment the client risks at most $l$, (ii) $l$ can be increased instantly with cooperation between client and provider, (iii) $l$ can be decreased by $x$ instantly with cooperation if the main channel $\omega$ is increased by $x$, and (iv) $l$ can be decreased without cooperation by the client with some delay.
 
-Sub-channel $\omega_p$ is composed of a sub-channel states $\Sigma^p$ and contract state $M^p \subset M$. Sub-channel states are noted $\sigma^p \in \Sigma^p$. We define an increase of the limit $l$ as $\delta_{\sigma^p}$. Transition between two sub-channel state can be triggered with a delta or because of a merged into the main channel.
+Sub-channel $\omega_p$ is composed of a sub-channel state $\Sigma^p$ and contract state $M^p \subset M$. Sub-channel states are noted $\sigma^p \in \Sigma^p$. We define an increase of the limit $l$ as $\delta_{\sigma^p}$. The transition between two sub-channel states can be triggered with a delta or because of a merge into the main channel.
 
 We redefine the transition condition for contract states as
 $$\mu \xrightarrow{\delta_\mu \lor \sigma \lor \sigma^p} \mu'$$
@@ -636,7 +636,7 @@ $$\sigma \xrightarrow{\delta_\sigma \lor \sigma^p \lor \mu \rightarrow \mu'} \si
 and the new transition condition for sub-channel states as
 $$\sigma^p \xrightarrow{\delta_{\sigma^p} \lor \sigma \xrightarrow{\sigma^p} \sigma'} \sigma^{\prime p}$$
 
-We define also the new transition rules as
+We also define the new transition rules as
 \begin{equation*}
 \begin{split}
     \mu \xrightarrow{\sigma^p} \mu' &: \quad \mu' = \mu \cup \sigma^p = \mu \cup \{ \delta_{\sigma^p} \} \\
@@ -646,7 +646,7 @@ We define also the new transition rules as
 \end{split}
 \end{equation*}
 
-It is worth noting that sub-channel states can be enforced directly on the contract layer or merged to the main channel state, but in both case the main channel state is updated accordinaly. We miss two more rule definition
+It is worth noting that sub-channel states can be enforced directly on the contract layer or merged into the main channel state, but in both case the main channel state is updated accordingly. We miss two more rule definitions
 \begin{equation*}
 \begin{split}
     \sigma^p \xrightarrow{\delta_{\sigma^p}} \sigma^{\prime p} &: \quad \sigma^{\prime p} = \sigma^p \cup \{ \delta_{\sigma^p} \} \\
@@ -664,7 +664,7 @@ When a sub-channel state is merged into the main channel state, the sub-channel 
 \end{split}
 \end{equation*}
 
-where $\sigma_2$ contain all deltas, i.e. the total limit $l$. Set's states can be computed with the previous rules given the base states $\sigma^p_1$ and $\sigma_1$ as
+where $\sigma_2$ contains all deltas, i.e. the total limit $l$. Set's states can be computed with the previous rules given the base states $\sigma^p_1$ and $\sigma_1$ as
 \begin{align*}
     \sigma^p_1 &= \{\delta_{\sigma^p}\} \\
     \sigma_1   &= \{\delta_\sigma\} \\
@@ -672,12 +672,12 @@ where $\sigma_2$ contain all deltas, i.e. the total limit $l$. Set's states can 
     \sigma^p_2 &= \{\delta_{\sigma^p}\} \setminus \{\delta_\sigma,\delta_{\sigma^p}\} & &= \emptyset
 \end{align*}
 
-We say that the main channel state contain a sub-channel state if the sub-channel state has been merged. The rule follows the superset rule
+We say that the main channel state contains a sub-channel state if the sub-channel state has been merged. The rule follows the superset rule
 $$\sigma \supset \sigma^p \iff \exists \sigma' \mid \sigma' \xrightarrow{\sigma^p} \sigma$$
 
-\paragraph{Channels' states pairings} We define pairings of main channel and sub-channel states. States in pairings can be eighter non-exclusive $\parallel$, i.e. both states can be enforced on the contract layer, or mutualy exclusive $\perp$, i.e. only one of the two states can be enforced.
+\paragraph{Channels' states pairings} We define pairings of main channel and sub-channel states. States in pairings can be either non-exclusive $\parallel$, i.e. both states can be enforced on the contract layer, or mutually exclusive $\perp$, i.e. only one of the two states can be enforced.
 
-We define, as prevously shown, four states when a merge appen: $\sigma_1, \sigma_2, \sigma^p_1, \sigma^p_2$. We define tree pairings of states (noted $1, 2, 3$) with only one state in channel and sub-channel as
+We define, as previously shown, four states when a merge happens: $\sigma_1, \sigma_2, \sigma^p_1, \sigma^p_2$. We define three pairings of states (noted $1, 2, 3$) with only one state in channel and sub-channel as
 \begin{equation*}
     \begin{matrix}
         \sigma^p_1 & \xrightarrow{\sigma_1 \xrightarrow{\sigma^p_1} \sigma_2} & \sigma^p_2 \\
@@ -686,7 +686,7 @@ We define, as prevously shown, four states when a merge appen: $\sigma_1, \sigma
     \end{matrix}
 \end{equation*}
 
-To guarentee the partialy-trusted model the pairing 1 is non-exclusive and must be valid at any moment but must invalidate the pairing 3. The inverse is also true. The pairing 2 must be mutualy exclusive, e.g. if $\sigma^p_1$ is enforced then $\sigma_2 : \sigma_2 \supset \sigma^p_1$ must be invalid in the contract layer. Otherwise deltas in $\sigma^p_1$ can be used twice and the partialy-trusted model is broken. 
+To guarantee the partially-trusted model the pairing 1 is non-exclusive and must be valid at any moment but must invalidate the pairing 3. The inverse is also true. The pairing 2 must be mutually exclusive, e.g. if $\sigma^p_1$ is enforced then $\sigma_2 : \sigma_2 \supset \sigma^p_1$ must be invalid in the contract layer. Otherwise deltas in $\sigma^p_1$ can be used twice and the partialy-trusted model is broken.
 
 Given the previous case we can derive generic rules
 $$\forall (\sigma, \sigma^p) : \sigma \perp \sigma^p \iff \sigma \supset \sigma^p$$
@@ -697,7 +697,7 @@ $$\forall (\sigma, \sigma^p) : \sigma \parallel \sigma^p \iff \sigma \not \supse
 The fourth pairing $(\sigma_1, \sigma^p_2)$ is valid but does not represent a threat for the clients. Deltas merged in $\sigma_2$ are removed in $\sigma^p_2$ because of the rule
 $$\sigma^p \xrightarrow{\sigma \xrightarrow{\sigma^{\prime\prime p}} \sigma'} \sigma^{\prime p} : \quad \sigma^{\prime p} = \sigma^p \setminus \sigma^{\prime\prime p}$$
 
-and are not in $\sigma_1$. So $\sigma_1 + \sigma^p_2$ have less value than the tree other pairings. It is worth noting that the pairing 3 $(\sigma_2, \sigma^p_2)$ is equal to $(\sigma_2, \emptyset)$ and then is the same as only enforced $\sigma_2$.
+and are not in $\sigma_1$. So $\sigma_1 + \sigma^p_2$ have less value than the three other pairings. It is worth noting that the pairing 3 $(\sigma_2, \sigma^p_2)$ is equal to $(\sigma_2, \emptyset)$ and then is the same as only enforced $\sigma_2$.
 
 \subsubsection{Sub-channel partial merge} Sub-channel partial merges move an arbitrary amount $y < l$ into the main channel and can be defined as
 \begin{align*}
@@ -705,7 +705,7 @@ and are not in $\sigma_1$. So $\sigma_1 + \sigma^p_2$ have less value than the t
     \Sigma&: \sigma_1 \xrightarrow{\sigma_1^p} \sigma_2 & &\mid y(\sigma_1^p) < l
 \end{align*}
 
-where initial limit $l = \sigma^p_1$ and $\sigma^p_1 \perp \sigma_2 \land \sigma^p_3 \parallel \sigma_2$. The security of a partial merge inherit the security of a merge only if the value of pairing $(\sigma_2, \sigma^p_3)$ is greather or equal to pairing $(\sigma_1, \sigma^p_1)$.
+where initial limit $l = \sigma^p_1$ and $\sigma^p_1 \perp \sigma_2 \land \sigma^p_3 \parallel \sigma_2$. The security of a partial merge inherits the security of a merge only if the value of pairing $(\sigma_2, \sigma^p_3)$ is greater than or equal to pairing $(\sigma_1, \sigma^p_1)$.
 
 \begin{table}[t]
   \begin{tabularx}{\textwidth}{| S | C | C | C |}
@@ -742,7 +742,7 @@ where initial limit $l = \sigma^p_1$ and $\sigma^p_1 \perp \sigma_2 \land \sigma
 
 \subsection{Contract state}
 
-\subsection{Contract state transition} Validity rules of indexes $N$ and $I$ are defined as follow
+\subsection{Contract state transition} Validity rules of indexes $N$ and $I$ are defined as follows
 %$$N_\mu < N_\sigma \quad\quad\quad  N_{\mu} < N_{\sigma^p}$$
 %$$N_\mu < N_\sigma < N_{\sigma^p}$$
 
