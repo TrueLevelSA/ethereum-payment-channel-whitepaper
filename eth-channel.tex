@@ -641,7 +641,6 @@ We also define the new transition rules as
 \begin{split}
     \mu \xrightarrow{\sigma^p} \mu' &: \quad \mu' = \mu \cup \sigma^p = \mu \cup \{ \delta_{\sigma^p} \} \\
     \sigma \xrightarrow{\sigma^p} \sigma' &: \quad \sigma' = \sigma \cup \sigma^p = \sigma \cup \{ \delta_{\sigma^p} \} \\
-    %\sigma \xrightarrow{\delta_{\sigma^p}} \sigma' &: \quad \sigma' = \sigma \cup \{ \delta_{\sigma^p} \}  \\
     \sigma \xrightarrow{\mu \xrightarrow{\sigma^p} \mu'} \sigma' &: \quad \sigma' =  \sigma \cup \mu' = \sigma \cup \{ \delta_{\sigma^p} \} \\
 \end{split}
 \end{equation*}
@@ -707,44 +706,54 @@ and are not in $\sigma_1$. So $\sigma_1 + \sigma^p_2$ have less value than the t
 
 where initial limit $l = \sigma^p_1$ and $\sigma^p_1 \perp \sigma_2 \land \sigma^p_3 \parallel \sigma_2$. The security of a partial merge inherits the security of a merge only if the value of pairing $(\sigma_2, \sigma^p_3)$ is greater than or equal to pairing $(\sigma_1, \sigma^p_1)$.
 
-\begin{table}[t]
-  \begin{tabularx}{\textwidth}{| S | C | C | C |}
-    \cline{2-4}
-      \multicolumn{1}{c|}{ } & $\mu$ & $\sigma$ & $\sigma^p$ \\ \cline{2-4}
-      \multicolumn{1}{c|}{ } & $(I_\mu,I_{\mu^p},N_\mu,B_\mu,R_\mathcal{P})$ & $(I_\sigma,N_\sigma,B_\sigma,D,S,R)$ & $(I_{\sigma^p},N_{\sigma^p},L)$ \\
-  \hhline{~===}
-      \multicolumn{1}{c|}{ } & $\mu_0(0,0,0,0,0)$  & $\emptyset$          & $\emptyset$ \\ \cline{1-1}
-      $\delta_\mu^{10}$      & $\mu_1(0,0,0,10,0)$ & $\sigma_1(0,0,10,10,0,0)$    &             \\
-      $\delta_{\sigma^p}^3$  &                &                      & $\sigma^p_1(0,0,3)$   \\
-      $\delta_\sigma^4$ &    & $\sigma_2(0,0,10,10,4,0)$  & \\
-      $\delta_\sigma^1 + \delta_{\sigma^p}^2$ & & $\sigma_3(0,1,10,10,5,0)$  & $\sigma^p_2(0,1,2)$   \\
-      $\delta_{\sigma^p}^3$  &                &                      & $\sigma^p_3(0,1,5)$   \\
-      \cline{1-4}
-      \multicolumn{4}{c}{ $\cdots$ } \\
-      \cline{1-4}
-      $\sigma^p_1(\mu_1)^3$ & $\mu_2(0,1,0,7,0)$ & $\sigma_3(0,0,7,10,7,0)$ & \\
-      $\sigma_2(\mu_2)^3$ & $\mu_3(1,1,0,3,0)$ & $\sigma_4(1,0,3,10,7,0)$ & \\
-      \cline{1-4}
-      \multicolumn{4}{c}{ $\cdots$ } \\
-      \cline{1-4}
-      $\sigma_3(\mu_1)$ & $\mu_2(1,0,1,5,0)$ & $\sigma_4(1,0,5,10,5,0)$ & \\
-      $\sigma^p_3(\mu_2)^2$ & $\mu_3(1,1,1,3,0)$ & $\sigma_5(1,1,3,10,7,0)$ & \\
-      \cline{1-4}
-      \multicolumn{4}{c}{ $\cdots$ } \\
-      \cline{1-4}
-      $\sigma^p_3(\mu_1)^2$ & $\mu_2(0,1,1,8,0)$ & $\sigma_4(0,1,8,10,7,0)$ & \\
-      $\sigma_3(\mu_2)$ & $\mu_3(1,1,1,3,0)$ & $\sigma_4(1,1,3,10,7,0)$ & \\
-      \cline{1-4}
-  \end{tabularx}
-  \medskip
-    \caption{State transitions with a sub-channel $\omega_p$}
-\end{table}
+%\begin{table}[t]
+%  \begin{tabularx}{\textwidth}{| S | C | C | C |}
+%    \cline{2-4}
+%      \multicolumn{1}{c|}{ } & $\mu$ & $\sigma$ & $\sigma^p$ \\ \cline{2-4}
+%      \multicolumn{1}{c|}{ } & $(I_\mu,I_{\mu^p},N_\mu,B_\mu,R_\mathcal{P})$ & $(I_\sigma,N_\sigma,B_\sigma,D,S,R)$ & $(I_{\sigma^p},N_{\sigma^p},L)$ \\
+%  \hhline{~===}
+%      \multicolumn{1}{c|}{ } & $\mu_0(0,0,0,0,0)$  & $\emptyset$          & $\emptyset$ \\ \cline{1-1}
+%      $\delta_\mu^{10}$      & $\mu_1(0,0,0,10,0)$ & $\sigma_1(0,0,10,10,0,0)$    &             \\
+%      $\delta_{\sigma^p}^3$  &                &                      & $\sigma^p_1(0,0,3)$   \\
+%      $\delta_\sigma^4$ &    & $\sigma_2(0,0,10,10,4,0)$  & \\
+%      $\delta_\sigma^1 + \delta_{\sigma^p}^2$ & & $\sigma_3(0,1,10,10,5,0)$  & $\sigma^p_2(0,1,2)$   \\
+%      $\delta_{\sigma^p}^3$  &                &                      & $\sigma^p_3(0,1,5)$   \\
+%      \cline{1-4}
+%      \multicolumn{4}{c}{ $\cdots$ } \\
+%      \cline{1-4}
+%      $\sigma^p_1(\mu_1)^3$ & $\mu_2(0,1,0,7,0)$ & $\sigma_3(0,0,7,10,7,0)$ & \\
+%      $\sigma_2(\mu_2)^3$ & $\mu_3(1,1,0,3,0)$ & $\sigma_4(1,0,3,10,7,0)$ & \\
+%      \cline{1-4}
+%      \multicolumn{4}{c}{ $\cdots$ } \\
+%      \cline{1-4}
+%      $\sigma_3(\mu_1)$ & $\mu_2(1,0,1,5,0)$ & $\sigma_4(1,0,5,10,5,0)$ & \\
+%      $\sigma^p_3(\mu_2)^2$ & $\mu_3(1,1,1,3,0)$ & $\sigma_5(1,1,3,10,7,0)$ & \\
+%      \cline{1-4}
+%      \multicolumn{4}{c}{ $\cdots$ } \\
+%      \cline{1-4}
+%      $\sigma^p_3(\mu_1)^2$ & $\mu_2(0,1,1,8,0)$ & $\sigma_4(0,1,8,10,7,0)$ & \\
+%      $\sigma_3(\mu_2)$ & $\mu_3(1,1,1,3,0)$ & $\sigma_4(1,1,3,10,7,0)$ & \\
+%      \cline{1-4}
+%  \end{tabularx}
+%  \medskip
+%    \caption{State transitions with a sub-channel $\omega_p$}
+%\end{table}
 
-\subsection{Contract state}
+\subsection{Channel state} We extend the channel state to
+$$\mu_c = (I_\sigma,N_\sigma,B_\sigma,D,S,R)$$
+
+\subsection{Sub-channel state} We define the sub-channel state as
+$$\mu^p_c = (I_{\sigma^p},N_{\sigma^p},L)$$
+
+\subsection{Contract state} We extend the contract state to
+$$\mu_c = (I_\mu,I_{\mu^p},N_\mu,N_{\mu^p},B_\mu,R_\mathcal{P})$$
 
 \subsection{Contract state transition} Validity rules of indexes $N$ and $I$ are defined as follows
-%$$N_\mu < N_\sigma \quad\quad\quad  N_{\mu} < N_{\sigma^p}$$
-%$$N_\mu < N_\sigma < N_{\sigma^p}$$
+\begin{align*}
+    \mu \xrightarrow{\sigma^p} \mu' &: \quad \sigma^p \parallel \sigma \iff N_{\sigma^p} > N_\mu& &\mid \exists \sigma :  \mu' \supset \sigma \\
+    \mu \xrightarrow{\sigma} \mu' &: \quad \sigma^p \parallel \sigma \iff N_{\sigma} < N_{\mu^p}& &\mid \exists \sigma^p : \mu' \supset \sigma^p \\
+    \sigma \xrightarrow{\sigma^p} \sigma' &: \quad N_\sigma = N_{\sigma^p} && \\
+\end{align*}
 
 and
 $$I_\mu = I_\sigma \quad\quad\quad  I_{\mu^p} = I_{\sigma^p}$$
