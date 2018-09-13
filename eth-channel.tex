@@ -147,9 +147,9 @@ We see that all channel states based on $\sigma_4$ will never contain $\delta_\s
 \section{Building blocks}
 \subsection{Contract state variables} We define variables to acces the contract state $\mu \in M$ for a client $c \in \mathcal{C}$.
 
-\subsubsection{Current validity index, $I_\mu$} For each client the current index $I_\mu$ must be retreivable, $\forall c \in \mathcal{C}, \quad \exists I_\mu \in \mu >= 0$. The index for a client must start from $0$.
+\subsubsection{Current validity index, $I_\mu$} For each client the current index $I_\mu$ must be retreivable, $\forall c \in \mathcal{C}, \quad \exists I_\mu \in \mu \geq 0$. The index for a client must start from $0$.
 
-\subsubsection{Current contract client balance, $B_\mu$} For each client the current contract balance amount must be retrievable, $\forall c \in \mathcal{C}, \quad \exists B_\mu \in \mu >= 0$. It is worth noting that this current contract balance is not the same as the current channel balance or, in other words, the remaining amount of a client in the channel.
+\subsubsection{Current contract client balance, $B_\mu$} For each client the current contract balance amount must be retrievable, $\forall c \in \mathcal{C}, \quad \exists B_\mu \in \mu \geq 0$. It is worth noting that this current contract balance is not the same as the current channel balance or, in other words, the remaining amount of a client in the channel.
 
 \subsubsection{Current provider refund amount, $R_\mathcal{P}$} For each client the current provider refund amount must be retrievable, $\forall c \in \mathcal{C}, \quad \exists R_\mathcal{P} \in \mu$ such that $R_\mathcal{P}$ is the provider owned amount at the moment of the request. The remaining money must go to the client.
 
@@ -740,13 +740,27 @@ where initial limit $l = \sigma^p_1$ and $\sigma^p_1 \perp \sigma_2 \land \sigma
 %\end{table}
 
 \subsection{Channel state} We extend the channel state to
-$$\mu_c = (I_\sigma,N_\sigma,B_\sigma,D,S,R)$$
+$$\sigma_c = (I_\sigma,N_\sigma,B_\sigma,D,S,R)$$
+
+\subsubsection{Current merge index, $N_\sigma$} For each client the current index $N_\sigma$ must be retreivable, $\forall c \in \mathcal{C}, \quad \exists N_\sigma \in \sigma_c \geq 0$. The merge index for a client must start from 0.
 
 \subsection{Sub-channel state} We define the sub-channel state as
-$$\mu^p_c = (I_{\sigma^p},N_{\sigma^p},L)$$
+$$\sigma^p_c = (I_{\sigma^p},N_{\sigma^p},L)$$
+
+\subsubsection{Current index, $I_{\sigma^p}$} For each client the current index $I_{\sigma^p}$ must be retreivable, $\forall c \in \mathcal{C}, \quad \exists I_{\sigma^p} \in \sigma^p_c \geq 0$. The index for a client must start from 0.
+
+\subsubsection{Current merge index, $N_{\sigma^p}$} For each client the current index $N_{\sigma^p}$ must be retreivable, $\forall c \in \mathcal{C}, \quad \exists N_{\sigma^p} \in \sigma^p_c \geq 0$. The merge index for a client must start from 0.
+
+\subsubsection{Current limit, $L$} For each client the current pre-authorized limit $L$ must be retreivable, $\forall c \in \mathcal{C}, \quad \exists L \in \sigma^p_c \geq 0$.
 
 \subsection{Contract state} We extend the contract state to
 $$\mu_c = (I_\mu,I_{\mu^p},N_\mu,N_{\mu^p},B_\mu,R_\mathcal{P})$$
+
+\subsubsection{Current sub-channel index, $I_{\mu^p}$} For each client the current index $I_{\mu^p}$ must be retreivable, $\forall c \in \mathcal{C}, \quad \exists I_{\mu^p} \in \mu_c \geq 0$. The merge index for a client must start from 0.
+
+\subsubsection{Current channel merge index, $N_{\mu}$} For each client the current channel merge index $N_{\mu}$ must be retreivable, $\forall c \in \mathcal{C}, \quad \exists N_{\mu} \in \mu_c \geq 0$. The channel merge index for a client must start from 0.
+
+\subsubsection{Current sub-channel merge index, $N_{\mu^p}$} For each client the current sub-channel merge index $N_{\mu^p}$ must be retreivable, $\forall c \in \mathcal{C}, \quad \exists N_{\mu^p} \in \mu_c \geq 0$. The sub-channel merge index for a client must start from 0.
 
 \subsection{Contract state transition} Validity rules of indexes $N$ and $I$ are defined as follows
 \begin{align*}
