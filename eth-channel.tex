@@ -617,6 +617,8 @@ with
 
 If a client send a withdraw directive to the provider and the provider does not accept it nor enforced it, and if the client spend the available amount $A$, then the withdraw directive and the latest settle directive are mutualy exclusive because the lack of balance in the channel.
 
+There is no insentive for the provider to accept more payments if he did not enforced the directive. But to protect the client the directive should be valid during a limited amount of time.
+
 \subsubsection{Withdraw directive, $d_w$} Withdraw directive $d_w$ allows the client to withdraw an arbitrary amount and transfer it to an arbitrary location.
 \begin{equation*}
 \begin{split}
@@ -627,7 +629,14 @@ If a client send a withdraw directive to the provider and the provider does not 
 
 where $W$ is the withdraw amount and $L$ the location where funds are moved.
 
-%\subsection{Co-operative Close} Allows the client and the provider to negociate a final state where all pendings are resolved.
+\subsection{Co-operative Close} Allows the client and the provider to negociate a final state where all pendings are resolved to close the channel with one instant on-chain transaction. Clients must be able to produce directives $d_c$ but cannot enforced them. The provider should be the only one able to enforced a close directive acquire from a client.
+
+\subsubsection{Close directive, $d_c$} Close directive $d_c$ allows to close a channel with one instant transaction.
+\begin{equation*}
+\begin{split}
+    d_c &= d_r \quad \text{with limited validity} \\
+\end{split}
+\end{equation*}
 
 \section{Sub-channel applications} In this chapter we describe how to use sub-channels to build a partially trusted pre-authorized payment layer. Pre-authorized payments in sub-channel $\omega_p$ can be merged at any moment into the main channel $\omega$ given a partially-trusted model.
 
