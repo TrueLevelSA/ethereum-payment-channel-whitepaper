@@ -573,7 +573,7 @@ $$D = S + R \land B_\mu = 0$$
 \subsubsection{Refund directive, $d_r$} Refund directive $d_r$ allows the client to claim all the remaining funds and transfer them after some delay if the provider is not able to dispute the claim nor resolves the request. The provider is not able to dispute the claim if the directive is generated from the message derived by the latest channel state in $\Sigma$.
 \begin{equation*}
 \begin{split}
-    h &= \texttt{keccak256}(\texttt{contract},c,I_m,O(\mathcal{P})) \\
+    h &= \texttt{keccak256}(\texttt{contract},c,I_m,O) \\
     d_r &= \texttt{sign}(\texttt{prefix}, h) \quad \text{with $c$ private key} \\
 \end{split}
 \end{equation*}
@@ -581,7 +581,7 @@ $$D = S + R \land B_\mu = 0$$
 with
 \begin{equation*}
 \begin{split}
-    O(\mathcal{P}) &= B_\mu - A \\
+    O &= B_\mu - A \\
     &= B_\mu - (D_m - S + B_\mu - B_\sigma) \\
 \end{split}
 \end{equation*}
@@ -598,20 +598,36 @@ A refund request can be closed in three different manners
 \end{split}
 \end{equation*}
 
-\subsection{Dispute refund} Disputes are won if the provider can prove that is owns a payment directive $d_s$, i.e. client agreed on a later channel state $\sigma'$, where
-$$O(\mathcal{P})' > O(\mathcal{P}), \quad O(\mathcal{P})' \in d_s \land O(\mathcal{P}) \in d_r$$
+\subsubsection{Dispute refund} Disputes are won if the provider can prove that is owns a payment directive $d_s$, i.e. client agreed on a later channel state $\sigma'$, where
+$$O' > O : \quad O' \in d_s \land O \in d_r$$
 
 with
 \begin{equation*}
 \begin{split}
-    O(\mathcal{P})' &= B_\mu - A \\
+    O' &= B_\mu - A \\
     &= B_\mu - (D_m - S + B_\mu - B_\sigma) \\
 \end{split}
 \end{equation*}
 
-\subsection{Resolve refund} Provider can choose to agree with the request and resolve it directly. By resolving the request the provider will get his remaining funds and send the client available funds $A$ directly to the client. It is worth noting that the provider has no incentive to resolve requests where $S = 0$.
+\subsubsection{Resolve refund} Provider can choose to agree with the request and resolve it directly. By resolving the request the provider will get his remaining funds and send the client available funds $A$ directly to the client. It is worth noting that the provider has no incentive to resolve requests where $S = 0$.
 
-\subsection{Claim refund} The client can claim his funds after the delay if the provider has not disputed nor resolved the request.
+\subsubsection{Claim refund} The client can claim his funds after the delay if the provider has not disputed nor resolved the request.
+
+\subsection{Co-operative Withdraw} Allowing the client to withdraw an amount from the channel is performed with an acquire directive by the provider. Clients must be able to create directives $d_w$ but cannot enforced them. This feature is only available in the case of a honest co-operative provider that accept and enforced the directive. It must not be possible to withdraw more than the client available amount $A$.
+
+If a client send a withdraw directive to the provider and the provider does not accept it nor enforced it, and if the client spend the available amount $A$, then the withdraw directive and the latest settle directive are mutualy exclusive because the lack of balance in the channel.
+
+\subsubsection{Withdraw directive, $d_w$} Withdraw directive $d_w$ allows the client to withdraw an arbitrary amount and transfer it to an arbitrary location.
+\begin{equation*}
+\begin{split}
+    h &= \texttt{keccak256}(\texttt{contract},c,W,L) \\
+    d_w &= \texttt{sign}(\texttt{prefix}, h) \quad \text{with $c$ private key} \\
+\end{split}
+\end{equation*}
+
+where $W$ is the withdraw amount and $L$ the location where funds are moved.
+
+%\subsection{Co-operative Close} Allows the client and the provider to negociate a final state where all pendings are resolved.
 
 \section{Sub-channel applications} In this chapter we describe how to use sub-channels to build a partially trusted pre-authorized payment layer. Pre-authorized payments in sub-channel $\omega_p$ can be merged at any moment into the main channel $\omega$ given a partially-trusted model.
 
